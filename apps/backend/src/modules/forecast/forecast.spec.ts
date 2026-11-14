@@ -14,8 +14,12 @@ import {
   type Quantile,
 } from './forecast.data';
 
+// Формулу проверяем на исходном файле кейса: контрольные числа посчитаны по
+// нему и не зависят от того, как перегенерирован свой прогноз.
+const CASE_FORECAST_CSV = 'data/seasonal_forecast.csv';
+
 const data = loadForecastData({
-  forecast: resolveDataPath(undefined, DEFAULT_FORECAST_CSV),
+  forecast: resolveDataPath(undefined, CASE_FORECAST_CSV),
   routes: resolveDataPath(undefined, DEFAULT_ROUTES_CSV),
 });
 
@@ -167,6 +171,22 @@ describe('загрузка данных', () => {
       for (const q of FORECAST_QUANTILES) {
         expect(Number.isFinite(flight.baseDemand[q])).toBe(true);
       }
+    }
+  });
+
+  it('свой прогноз по умолчанию загружается целиком и совпадает с кейсом по рейсам и местам', () => {
+    const own = loadForecastData({
+      forecast: resolveDataPath(undefined, DEFAULT_FORECAST_CSV),
+      routes: resolveDataPath(undefined, DEFAULT_ROUTES_CSV),
+    });
+    expect(own.routes.map((r) => r.route)).toEqual(
+      data.routes.map((r) => r.route),
+    );
+    expect([...own.flights.keys()].sort()).toEqual(
+      [...data.flights.keys()].sort(),
+    );
+    for (const [key, flight] of own.flights) {
+      expect(flight.seats).toBe(data.flights.get(key)?.seats);
     }
   });
 

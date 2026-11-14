@@ -34,7 +34,7 @@ const RULES: EnvRule[] = [
         ? null
         : 'целое число: от него зависит, по чьему IP считаются лимиты',
   },
-  // Без значения берутся data/seasonal_forecast.csv и data/routes.csv.
+  // Без значения берутся data/my_forecast.csv и data/routes.csv.
   {
     key: 'FORECAST_CSV',
     required: 'optional',

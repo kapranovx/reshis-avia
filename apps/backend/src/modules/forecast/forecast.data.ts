@@ -35,7 +35,9 @@ export class ForecastDataError extends Error {
   override name = 'ForecastDataError';
 }
 
-export const DEFAULT_FORECAST_CSV = 'data/seasonal_forecast.csv';
+// Свой прогноз из ИИ-блока. Исходный файл кейса data/seasonal_forecast.csv
+// остаётся для тестов: на нём посчитаны контрольные числа.
+export const DEFAULT_FORECAST_CSV = 'data/my_forecast.csv';
 export const DEFAULT_ROUTES_CSV = 'data/routes.csv';
 
 const ROUTE_CODE = /^[A-Z]{3}-[A-Z]{3}$/;

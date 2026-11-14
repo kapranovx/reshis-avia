@@ -27,3 +27,5 @@ process.env.REDIS_URL ??= 'redis://localhost:6382/1';
 process.env.CORS_ORIGIN ??= 'http://localhost:3500';
 process.env.TRUST_PROXY_HOPS ??= '0';
 process.env.LOG_LEVEL ??= 'silent';
+// Контрольные числа e2e посчитаны по исходному файлу кейса, а не по своему прогнозу.
+process.env.FORECAST_CSV ??= 'data/seasonal_forecast.csv';

@@ -9,8 +9,12 @@
 - Пользователь вводит пункт отправления, пункт назначения, дату вылета и цену
   билета и видит число мест (`seats`) и прогноз продаж.
 - Данные в `data/`:
-  - `seasonal_forecast.csv` — `route, date, seats` и для каждого сценария
-    q = 0.1…0.9 тройка `{q}_base_demand, {q}_price, {q}_price_demand`;
+  - `my_forecast.csv` — свой прогноз из ИИ-блока, бэкенд читает его по
+    умолчанию (`FORECAST_CSV`). Табло на главной посчитано по нему;
+  - `seasonal_forecast.csv` — исходный файл кейса того же формата:
+    `route, date, seats` и для каждого сценария q = 0.1…0.9 тройка
+    `{q}_base_demand, {q}_price, {q}_price_demand`. На нём контрольные
+    числа unit- и e2e-тестов;
   - `routes.csv` — `route, name, base_price, cost_per_passenger,
     price_sensitivity, price_min, price_max`.
 - Формула: желают = `0.5_base_demand − price_sensitivity × (цена − base_price)`;
