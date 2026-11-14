@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { SESSION_COOKIE } from '@reshis-avia/shared';
-import { ForecastExample } from '@/components/landing/forecast-example';
+import { DepartureBoard } from '@/components/landing/departure-board';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Wordmark } from '@/components/ui/wordmark';
@@ -12,17 +12,17 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-5">
+      <header className="mx-auto flex h-18 w-full max-w-6xl items-center justify-between gap-4 px-5">
         <Wordmark />
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto grid w-full max-w-5xl flex-1 content-center items-center gap-x-16 gap-y-12 px-5 py-12 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 content-center items-center gap-x-14 gap-y-10 px-5 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,31rem)]">
         <div>
-          <h1 className="max-w-xl text-4xl leading-[1.08] font-bold tracking-[-0.035em] sm:text-[3.25rem]">
+          <h1 className="font-[family-name:var(--font-display)] text-[clamp(3.25rem,11vw,5.25rem)] leading-[0.92] font-bold tracking-[-0.01em]">
             Сколько билетов купят на рейс
           </h1>
-          <p className="mt-5 max-w-lg text-lg text-[var(--color-fg-muted)]">
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-[var(--color-fg-muted)]">
             Выберите направление, дату вылета и цену билета. Сервис покажет,
             сколько людей захотят купить билет и сколько купят с учётом мест в
             самолёте.
@@ -45,10 +45,10 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <ForecastExample />
+        <DepartureBoard />
       </main>
 
-      <footer className="mx-auto w-full max-w-5xl px-5 pb-6 text-xs text-[var(--color-fg-subtle)]">
+      <footer className="mx-auto w-full max-w-6xl px-5 pb-6 text-xs text-[var(--color-fg-subtle)]">
         Кейс «Разработка» турнира «Решись!»
       </footer>
     </div>
