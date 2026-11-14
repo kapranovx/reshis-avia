@@ -13,7 +13,7 @@ export default function NotFound() {
           Страница не найдена
         </h1>
         <p className="mt-3 text-[var(--color-fg-muted)]">
-          Возможно, адрес набран с ошибкой или страница переехала.
+          Такой страницы на сайте нет. Проверьте адрес в строке браузера.
         </p>
         <Button asChild className="mt-6">
           <Link href="/">На главную</Link>

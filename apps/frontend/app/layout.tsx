@@ -1,27 +1,21 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Manrope } from 'next/font/google';
+import { Onest } from 'next/font/google';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import './globals.css';
 
-const inter = Inter({
+const onest = Onest({
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const manrope = Manrope({
-  subsets: ['latin', 'cyrillic'],
-  weight: ['700'],
-  variable: '--font-manrope',
+  variable: '--font-onest',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'reshis-avia',
-    template: '%s · reshis-avia',
+    default: 'Решись Авиа — прогноз продаж',
+    template: '%s — Решись Авиа',
   },
-  description: 'Прогноз продаж авиабилетов',
+  description:
+    'Сколько людей захотят купить билет на рейс и сколько купят с учётом мест в самолёте',
 };
 
 export const viewport: Viewport = {
@@ -38,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${inter.variable} ${manrope.variable} antialiased`}
+      className={`${onest.variable} antialiased`}
       suppressHydrationWarning
     >
       <head>

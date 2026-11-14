@@ -12,11 +12,14 @@
 
   --color-border: #d9dbe1;
   --color-border-strong: #b9bcc6;
+  /* Рамка поля ввода: контраст к фону не ниже 3:1. */
+  --color-input-border: #8a8e99;
 
   --color-accent: #2b4acb;
   --color-accent-hover: #2440ad;
   --color-accent-fg: #ffffff;
   --color-accent-subtle: #eef1fd;
+  --color-accent-track: #d3daf5;
 
   --color-success: #0f7b4f;
   --color-success-subtle: #e8f5ee;
@@ -25,9 +28,11 @@
   --color-warning: #96620a;
   --color-warning-subtle: #fdf4e3;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display:
-    var(--font-manrope), var(--font-inter), ui-sans-serif, sans-serif;
+  /* Столбцы графика: контраст к фону карточки не ниже 3:1. */
+  --color-chart-neutral: #8a8e99;
+  --color-chart-over: #c4841a;
+
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --radius-sm: 6px;
@@ -51,11 +56,13 @@
 
     --color-border: #2a2c33;
     --color-border-strong: #3b3e47;
+    --color-input-border: #666973;
 
     --color-accent: #6b86ff;
     --color-accent-hover: #8098ff;
     --color-accent-fg: #0d0f14;
     --color-accent-subtle: #1b2140;
+    --color-accent-track: #252b4a;
 
     --color-success: #4ac585;
     --color-success-subtle: #14261d;
@@ -63,6 +70,9 @@
     --color-danger-subtle: #2b1618;
     --color-warning: #d9a441;
     --color-warning-subtle: #2c2313;
+
+    --color-chart-neutral: #666973;
+    --color-chart-over: #d9a441;
   }
 }
 
@@ -80,11 +90,13 @@
 
   --color-border: #2a2c33;
   --color-border-strong: #3b3e47;
+  --color-input-border: #666973;
 
   --color-accent: #6b86ff;
   --color-accent-hover: #8098ff;
   --color-accent-fg: #0d0f14;
   --color-accent-subtle: #1b2140;
+  --color-accent-track: #252b4a;
 
   --color-success: #4ac585;
   --color-success-subtle: #14261d;
@@ -92,6 +104,9 @@
   --color-danger-subtle: #2b1618;
   --color-warning: #d9a441;
   --color-warning-subtle: #2c2313;
+
+  --color-chart-neutral: #666973;
+  --color-chart-over: #d9a441;
 }
 
 :root[data-theme='light'] {
@@ -155,6 +170,59 @@
   li,
   dd {
     text-wrap: pretty;
+  }
+}
+
+@layer components {
+  /* Заполненная часть дорожки показывает выбранную цену. --fill задаёт компонент. */
+  .range {
+    appearance: none;
+    height: 1.5rem;
+    background: transparent;
+  }
+  .range::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      var(--color-accent) var(--fill, 50%),
+      var(--color-accent-track) var(--fill, 50%)
+    );
+  }
+  .range::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      var(--color-accent) var(--fill, 50%),
+      var(--color-accent-track) var(--fill, 50%)
+    );
+  }
+  .range::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -7px;
+    border-radius: 50%;
+    border: 2px solid var(--color-accent);
+    background: var(--color-surface);
+  }
+  .range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--color-accent);
+    background: var(--color-surface);
+  }
+
+  /* Стрелки у числового поля меняют цену на 1 ₽, пользы от них нет. */
+  .no-spin {
+    appearance: textfield;
+  }
+  .no-spin::-webkit-inner-spin-button,
+  .no-spin::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
   }
 }
 

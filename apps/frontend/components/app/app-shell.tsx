@@ -88,28 +88,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <UserContext value={state.user}>
       <div className="flex min-h-dvh flex-col">
         <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur">
-          <div className="mx-auto flex h-14 w-full max-w-5xl items-center gap-4 px-5">
-            <Link href="/app" aria-label="В кабинет">
+          <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-5">
+            <Link href="/app" aria-label="К прогнозу">
               <Wordmark />
             </Link>
             <div className="ml-auto flex items-center gap-3">
-              <span className="hidden max-w-[18ch] truncate text-sm text-[var(--color-fg-muted)] sm:inline">
+              <span
+                title={state.user.email}
+                className="hidden max-w-[18ch] truncate text-sm text-[var(--color-fg-muted)] sm:inline"
+              >
                 {state.user.name}
               </span>
               <ThemeToggle className="hidden sm:inline-flex" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => void logout()}
-                aria-label="Выйти"
-              >
+              <Button variant="ghost" size="sm" onClick={() => void logout()}>
                 <LogOut />
-                <span className="hidden sm:inline">Выйти</span>
+                Выйти
               </Button>
             </div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-10">
+        <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-6 sm:py-8">
           {children}
         </main>
       </div>

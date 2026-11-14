@@ -28,10 +28,10 @@ export function AuthFrame({
   );
 }
 
-// min-h, чтобы кнопка не прыгала, когда появляется ошибка.
 export function FormError({ message }: { message: string | null }) {
+  if (!message) return null;
   return (
-    <p role="alert" className="min-h-5 text-sm text-[var(--color-danger)]">
+    <p role="alert" className="text-sm text-[var(--color-danger)]">
       {message}
     </p>
   );

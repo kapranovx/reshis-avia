@@ -28,9 +28,14 @@ export function Mark({ className }: { className?: string }) {
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <Mark />
-      <span className="font-[family-name:var(--font-display)] text-[19px] font-bold tracking-[-0.03em] text-[var(--color-fg)]">
-        reshis-avia
+      <Mark className="size-8" />
+      <span className="flex flex-col">
+        <span className="text-[17px] leading-5 font-bold tracking-[-0.02em] text-[var(--color-fg)]">
+          Решись Авиа
+        </span>
+        <span className="text-xs leading-4 [word-spacing:0.08em] text-[var(--color-fg-muted)]">
+          Прогноз продаж
+        </span>
       </span>
     </span>
   );
