@@ -1,8 +1,11 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { Forecast, RouteInfo } from '@reshis-avia/shared';
+import type { Forecast, ForecastDay, RouteInfo } from '@reshis-avia/shared';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
-import { ForecastQueryDto } from './dto/forecast-query.dto';
+import {
+  ForecastCalendarQueryDto,
+  ForecastQueryDto,
+} from './dto/forecast-query.dto';
 import { ForecastService } from './forecast.service';
 
 @ApiTags('forecast')
@@ -18,8 +21,19 @@ export class ForecastController {
   }
 
   @Get('forecast')
-  @ApiOperation({ summary: 'Прогноз продаж: медиана и 9 сценариев спроса' })
+  @ApiOperation({
+    summary:
+      'Прогноз продаж: медиана, 9 сценариев спроса, лучшая цена и маржинальная прибыль',
+  })
   calculate(@Query() query: ForecastQueryDto): Forecast {
     return this.forecast.forecast(query);
+  }
+
+  @Get('forecast/calendar')
+  @ApiOperation({
+    summary: 'Прогноз продаж по медиане на все даты маршрута при одной цене',
+  })
+  calendar(@Query() query: ForecastCalendarQueryDto): ForecastDay[] {
+    return this.forecast.calendar(query);
   }
 }

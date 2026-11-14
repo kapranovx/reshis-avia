@@ -29,6 +29,31 @@ export interface ForecastQuery {
   price: number;
 }
 
+// Календарь загрузки: те же маршрут и цена, но на все даты рейсов.
+export type ForecastCalendarQuery = Omit<ForecastQuery, 'date'>;
+
+// Прогноз на одну дату по медиане, для календаря.
+export interface ForecastDay {
+  date: string;
+  seats: number;
+  wants: number;
+  sales: number;
+  limitedBySeats: boolean;
+}
+
+// Деньги рейса по медиане. Маржинальная прибыль — выручка минус затраты на
+// пассажиров из routes.csv. Затрат на сам перелёт в routes.csv нет. На выбор
+// лучшей цены они бы и не повлияли: от числа пассажиров они не зависят.
+export interface ForecastPricing {
+  costPerPassenger: number;
+  margin: number;
+  // Цена с наибольшей маржинальной прибылью в обычном диапазоне маршрута,
+  // в целых рублях.
+  bestPrice: number;
+  bestSales: number;
+  bestMargin: number;
+}
+
 export interface ForecastScenario {
   quantile: number;
   wants: number;
@@ -51,4 +76,5 @@ export interface Forecast {
   simple: { wants: number; sales: number };
   scenarios: ForecastScenario[];
   limitedBySeats: boolean;
+  pricing: ForecastPricing;
 }

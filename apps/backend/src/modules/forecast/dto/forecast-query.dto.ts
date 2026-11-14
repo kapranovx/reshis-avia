@@ -7,14 +7,15 @@ import {
   IsString,
   Matches,
 } from 'class-validator';
-import type { ForecastQuery } from '@reshis-avia/shared';
+import type { ForecastCalendarQuery, ForecastQuery } from '@reshis-avia/shared';
 
 const toCityCode = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().toUpperCase() : value;
 
 const CITY_CODE = /^[A-Z]{3}$/;
 
-export class ForecastQueryDto implements ForecastQuery {
+// Маршрут и цена: общее для прогноза на дату и календаря загрузки.
+export class ForecastCalendarQueryDto implements ForecastCalendarQuery {
   @ApiProperty({ example: 'MOW' })
   @Transform(toCityCode)
   @Matches(CITY_CODE, {
@@ -31,14 +32,6 @@ export class ForecastQueryDto implements ForecastQuery {
   @IsString({ message: 'Укажите город назначения' })
   destination!: string;
 
-  // class-validator проверяет снизу вверх, а наружу уходит первое сообщение,
-  // поэтому проверка формата стоит ниже проверки значения.
-  @ApiProperty({ example: '2026-06-15' })
-  @IsISO8601({ strict: true }, { message: 'Такой даты нет в календаре' })
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Дата в формате ГГГГ-ММ-ДД' })
-  @IsString({ message: 'Укажите дату вылета' })
-  date!: string;
-
   @ApiProperty({ example: 9000, description: 'Цена билета, ₽' })
   @Type(() => Number)
   @IsPositive({ message: 'Цена должна быть больше нуля' })
@@ -47,4 +40,17 @@ export class ForecastQueryDto implements ForecastQuery {
     { message: 'Укажите цену числом' },
   )
   price!: number;
+}
+
+export class ForecastQueryDto
+  extends ForecastCalendarQueryDto
+  implements ForecastQuery
+{
+  // class-validator проверяет снизу вверх, а наружу уходит первое сообщение,
+  // поэтому проверка формата стоит ниже проверки значения.
+  @ApiProperty({ example: '2026-06-15' })
+  @IsISO8601({ strict: true }, { message: 'Такой даты нет в календаре' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Дата в формате ГГГГ-ММ-ДД' })
+  @IsString({ message: 'Укажите дату вылета' })
+  date!: string;
 }

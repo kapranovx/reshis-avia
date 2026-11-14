@@ -12,6 +12,7 @@ export interface RouteParams {
   destination: string;
   destinationName: string;
   basePrice: number;
+  costPerPassenger: number;
   priceSensitivity: number;
   priceMin: number;
   priceMax: number;
@@ -47,6 +48,7 @@ const ROUTE_COLUMNS = [
   'route',
   'name',
   'base_price',
+  'cost_per_passenger',
   'price_sensitivity',
   'price_min',
   'price_max',
@@ -205,18 +207,20 @@ function loadRoutes(path: string): Map<string, RouteParams> {
 
     const params = {
       basePrice: num('base_price'),
+      costPerPassenger: num('cost_per_passenger'),
       priceSensitivity: num('price_sensitivity'),
       priceMin: num('price_min'),
       priceMax: num('price_max'),
     };
     if (
       params.basePrice <= 0 ||
+      params.costPerPassenger < 0 ||
       params.priceSensitivity < 0 ||
       params.priceMin <= 0 ||
       params.priceMax < params.priceMin
     ) {
       throw new ForecastDataError(
-        `${path}, строка ${line}: цены должны быть больше нуля, price_min не больше price_max, чувствительность не отрицательная`,
+        `${path}, строка ${line}: цены должны быть больше нуля, price_min не больше price_max, затраты и чувствительность не отрицательные`,
       );
     }
 

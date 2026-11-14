@@ -1,5 +1,5 @@
 import request from 'supertest';
-import type { Forecast, RouteInfo } from '@reshis-avia/shared';
+import type { Forecast, ForecastDay, RouteInfo } from '@reshis-avia/shared';
 import {
   P,
   createTestApp,
@@ -92,6 +92,61 @@ describe('Прогноз', () => {
       quantile: 0.5,
       wants: result.simple.wants,
     });
+  });
+
+  it('добавляет лучшую цену и маржинальную прибыль', async () => {
+    const result = data<Forecast>(await forecast(valid).expect(200));
+    const { pricing } = result;
+    expect(pricing.costPerPassenger).toBe(4200);
+    expect(pricing.margin).toBeCloseTo((9347 - 4200) * 726.073, 6);
+    expect(Number.isInteger(pricing.bestPrice)).toBe(true);
+    expect(pricing.bestPrice).toBeGreaterThanOrEqual(result.priceMin);
+    expect(pricing.bestPrice).toBeLessThanOrEqual(result.priceMax);
+    expect(pricing.bestMargin).toBeGreaterThanOrEqual(pricing.margin);
+
+    // При лучшей цене прибыль та же, что обещана в ответе.
+    const atBest = data<Forecast>(
+      await forecast({ ...valid, price: pricing.bestPrice }).expect(200),
+    );
+    expect(atBest.pricing.margin).toBeCloseTo(pricing.bestMargin, 6);
+  });
+
+  it('календарь отдаёт медиану на все даты маршрута', async () => {
+    const res = await request(ctx.server)
+      .get(`${P}/forecast/calendar`)
+      .query({ origin: 'MOW', destination: 'AER', price: 9347 })
+      .set('Cookie', cookie)
+      .expect(200);
+    const days = data<ForecastDay[]>(res);
+    expect(days).toHaveLength(31);
+    expect(days[0].date).toBe('2026-06-01');
+    expect(days.at(-1)?.date).toBe('2026-07-01');
+    expect(days[0].wants).toBeCloseTo(726.073, 9);
+    expect(days[0]).toMatchObject({ seats: 900, limitedBySeats: false });
+  });
+
+  it('календарь закрыт без сессии и проверяет параметры', async () => {
+    const query = { origin: 'MOW', destination: 'AER', price: 9000 };
+    await request(ctx.server)
+      .get(`${P}/forecast/calendar`)
+      .query(query)
+      .expect(401);
+
+    const negative = await request(ctx.server)
+      .get(`${P}/forecast/calendar`)
+      .query({ ...query, price: 0 })
+      .set('Cookie', cookie)
+      .expect(400);
+    expect(envelope(negative).error?.message).toBe(
+      'Цена должна быть больше нуля',
+    );
+
+    const unknown = await request(ctx.server)
+      .get(`${P}/forecast/calendar`)
+      .query({ ...query, destination: 'XXX' })
+      .set('Cookie', cookie)
+      .expect(404);
+    expect(envelope(unknown).error?.message).toBe('Маршрут не найден');
   });
 
   it('принимает коды городов в любом регистре', async () => {

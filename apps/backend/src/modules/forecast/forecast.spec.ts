@@ -1,8 +1,15 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FORECAST_QUANTILES } from '@reshis-avia/shared';
-import { calculateForecast } from './forecast.calc';
+import { FORECAST_QUANTILES, MEDIAN_QUANTILE } from '@reshis-avia/shared';
+import {
+  bestPriceOf,
+  calculateDay,
+  calculateForecast,
+  marginAt,
+  salesOf,
+  wantsAt,
+} from './forecast.calc';
 import {
   DEFAULT_FORECAST_CSV,
   DEFAULT_ROUTES_CSV,
@@ -11,6 +18,7 @@ import {
   loadForecastData,
   parseCsv,
   resolveDataPath,
+  type ForecastData,
   type Quantile,
 } from './forecast.data';
 
@@ -147,6 +155,128 @@ describe('формула прогноза', () => {
     expect(
       calculateForecast(route, flight, route.priceMax + 1).priceOutOfRange,
     ).toBe(true);
+  });
+});
+
+describe('лучшая цена и маржинальная прибыль', () => {
+  const own = loadForecastData({
+    forecast: resolveDataPath(undefined, DEFAULT_FORECAST_CSV),
+    routes: resolveDataPath(undefined, DEFAULT_ROUTES_CSV),
+  });
+
+  // Перебор всех цен диапазона по рублю: лучшая цена должна давать ту же
+  // прибыль, что и самый выгодный вариант перебора.
+  const bruteForce = (source: ForecastData) => {
+    for (const flight of source.flights.values()) {
+      const route = source.routes.find((r) => r.route === flight.route)!;
+      const demand = flight.baseDemand[MEDIAN_QUANTILE];
+      const margin = (p: number) =>
+        marginAt(
+          p,
+          salesOf(wantsAt(demand, route, p), flight.seats),
+          route.costPerPassenger,
+        );
+      let top = -Infinity;
+      for (let p = route.priceMin; p <= route.priceMax; p += 1) {
+        top = Math.max(top, margin(p));
+      }
+      const best = bestPriceOf(route, demand, flight.seats);
+      expect(best).toBeGreaterThanOrEqual(route.priceMin);
+      expect(best).toBeLessThanOrEqual(route.priceMax);
+      expect(margin(best)).toBeCloseTo(top, 6);
+    }
+  };
+
+  it('не хуже перебора всех цен по рублю: файл кейса', () => {
+    bruteForce(data);
+  });
+
+  it('не хуже перебора всех цен по рублю: свой прогноз', () => {
+    bruteForce(own);
+  });
+
+  // Готовый код ИИ-блока кладёт лучшую цену медианы в столбец 0.5_price.
+  // Расхождение в несколько рублей — округление спроса в файле.
+  it.each([
+    ['файл кейса', 'data/seasonal_forecast.csv', data],
+    ['свой прогноз', DEFAULT_FORECAST_CSV, own],
+  ] as const)(
+    'совпадает с 0.5_price из файла прогноза до 10 ₽: %s',
+    (_name, file, source) => {
+      const [header, ...rows] = parseCsv(
+        readFileSync(resolveDataPath(undefined, file), 'utf8'),
+      );
+      const col = (name: string) => header.indexOf(name);
+      expect(rows).toHaveLength(source.flights.size);
+      for (const row of rows) {
+        const flight = source.flights.get(
+          flightKey(row[col('route')], row[col('date')]),
+        )!;
+        const route = source.routes.find((r) => r.route === flight.route)!;
+        const best = bestPriceOf(
+          route,
+          flight.baseDemand[MEDIAN_QUANTILE],
+          flight.seats,
+        );
+        expect(
+          Math.abs(best - Number(row[col('0.5_price')])),
+        ).toBeLessThanOrEqual(10);
+      }
+    },
+  );
+
+  it('прибыль при введённой цене и при лучшей считается по медиане', () => {
+    const route = routeOf('MOW-AER');
+    const flight = flightOf('MOW-AER', '2026-06-01');
+    const result = calculateForecast(route, flight, 9347);
+    const { pricing } = result;
+    expect(pricing.costPerPassenger).toBe(4200);
+    expect(pricing.margin).toBeCloseTo((9347 - 4200) * result.simple.sales, 6);
+    expect(pricing.bestSales).toBeCloseTo(
+      salesOf(
+        wantsAt(flight.baseDemand[MEDIAN_QUANTILE], route, pricing.bestPrice),
+        flight.seats,
+      ),
+      9,
+    );
+    expect(pricing.bestMargin).toBeCloseTo(
+      (pricing.bestPrice - 4200) * pricing.bestSales,
+      6,
+    );
+    expect(pricing.bestMargin).toBeGreaterThanOrEqual(pricing.margin);
+  });
+
+  it('когда желающих больше, чем мест, лучшая цена не ниже цены полного салона', () => {
+    const route = routeOf('MOW-AER');
+    const demand = 2000;
+    const best = bestPriceOf(route, demand, 900);
+    const fullCabin = route.basePrice + (demand - 900) / route.priceSensitivity;
+    expect(best).toBeGreaterThanOrEqual(
+      Math.min(route.priceMax, Math.floor(fullCabin)),
+    );
+  });
+
+  it('без чувствительности к цене лучшая — верхняя граница диапазона', () => {
+    const route = { ...routeOf('MOW-AER'), priceSensitivity: 0 };
+    expect(bestPriceOf(route, 500, 900)).toBe(route.priceMax);
+  });
+});
+
+describe('календарь загрузки', () => {
+  it('прогноз на дату совпадает с простым прогнозом', () => {
+    const route = routeOf('MOW-LED');
+    for (const date of SAMPLE_DATES) {
+      const flight = flightOf('MOW-LED', date);
+      const day = calculateDay(route, flight, 6100);
+      const full = calculateForecast(route, flight, 6100);
+      expect(day).toEqual({
+        date,
+        seats: full.seats,
+        wants: full.simple.wants,
+        sales: full.simple.sales,
+        limitedBySeats: full.limitedBySeats,
+      });
+    }
   });
 });
 
