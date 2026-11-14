@@ -6,6 +6,7 @@
 #
 # Нужен .env в корне клона (README, раздел «Деплой»).
 # Откат: git checkout <коммит> && ./scripts/deploy.sh --no-pull
+# Обратно: git checkout main && ./scripts/deploy.sh
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
