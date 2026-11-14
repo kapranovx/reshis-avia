@@ -29,9 +29,10 @@ COPY --from=build /repo/packages/shared/dist ./packages/shared/dist
 COPY --from=build /repo/apps/backend/package.json ./apps/backend/
 COPY --from=build /repo/apps/backend/prisma ./apps/backend/prisma
 COPY --from=build /repo/apps/backend/dist ./apps/backend/dist
+COPY data ./data
 
 # Чтение для всех (при клоне с umask 077 файлы будут 600). Владелец остаётся root.
-RUN chmod -R a+rX package.json packages/shared apps/backend
+RUN chmod -R a+rX package.json packages/shared apps/backend data
 
 USER node
 WORKDIR /repo/apps/backend
