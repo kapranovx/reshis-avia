@@ -1,0 +1,185 @@
+# Запуск: docker compose -f docker-compose.prod.yml up -d --build
+#
+# Сети:
+#   data (internal)  backend, migrate, postgres, redis
+#   web (internal)   caddy, frontend, backend
+#   edge             caddy, единственный с выходом наружу и портами на хосте
+
+name: reshis-avia
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-database-url: &database-url postgresql://${POSTGRES_USER:?нужен POSTGRES_USER}:${POSTGRES_PASSWORD:?нужен POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:?нужен POSTGRES_DB}?schema=public
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: reshis-avia-caddy
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 256m
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN:?нужен домен сайта}
+      ACME_EMAIL: ${ACME_EMAIL:?нужна почта для писем Let's Encrypt}
+    volumes:
+      # Монтируем каталог, а не файл, иначе после git pull контейнер не увидит новый Caddyfile.
+      - ./infra/caddy:/etc/caddy:ro
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - edge
+      - web
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN:?нужен домен сайта}/api/v1
+        API_URL_INTERNAL: http://backend:3501/api/v1
+    image: reshis-avia-frontend:latest
+    container_name: reshis-avia-frontend
+    restart: unless-stopped
+    init: true
+    logging: *logging
+    mem_limit: 512m
+    environment:
+      API_URL_INTERNAL: http://backend:3501/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - web
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3500/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    image: reshis-avia-backend:latest
+    container_name: reshis-avia-backend
+    restart: unless-stopped
+    init: true
+    logging: *logging
+    mem_limit: 512m
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3501
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Перед бэкендом один прокси (Caddy), иначе лимиты считались бы по его IP.
+      TRUST_PROXY_HOPS: 1
+      DATABASE_URL: *database-url
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: https://${DOMAIN:?нужен домен сайта}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - data
+      - web
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:3501/api/v1/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  # Миграции отдельным сервисом, бэкенд стартует только после их успешного завершения.
+  migrate:
+    image: reshis-avia-backend:latest
+    pull_policy: never
+    command: ['npx', 'prisma', 'migrate', 'deploy']
+    restart: 'no'
+    init: true
+    logging: *logging
+    mem_limit: 512m
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: *database-url
+      # В сети data нет интернета, не даём Prisma CLI ждать отправки телеметрии.
+      CHECKPOINT_DISABLE: '1'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: reshis-avia-postgres-prod
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 512m
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?нужен POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?нужен POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?нужен POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: reshis-avia-redis-prod
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 256m # должен быть больше maxmemory в redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - redisdata:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  data:
+    internal: true
+  web:
+    internal: true
+  edge:
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:
+  caddyconfig:

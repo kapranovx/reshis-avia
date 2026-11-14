@@ -1,0 +1,27 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Пока контейнер перезапускается, Caddy ждёт, а не сразу отдаёт 502.
+	handle /api/* {
+		reverse_proxy backend:3501 {
+			lb_try_duration 15s
+			lb_try_interval 250ms
+		}
+	}
+
+	handle {
+		reverse_proxy frontend:3500 {
+			lb_try_duration 15s
+			lb_try_interval 250ms
+		}
+	}
+}
