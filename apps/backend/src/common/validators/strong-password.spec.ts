@@ -1,28 +1,19 @@
 import { checkPassword, personalHints } from '@reshis-avia/shared';
 
 describe('checkPassword', () => {
-  it('пропускает пароль со всеми требованиями', () => {
+  it('пропускает обычный пароль от 8 символов', () => {
     expect(checkPassword('Gorod7veter')).toEqual([]);
   });
 
-  it('пропускает кириллический пароль: регистр смотрится по Юникоду', () => {
-    expect(checkPassword('Городветер7')).toEqual([]);
-  });
-
-  it('требует заглавную букву', () => {
-    expect(checkPassword('gorod7veter')).toContain('NEEDS_UPPERCASE');
-  });
-
-  it('требует строчную букву', () => {
-    expect(checkPassword('GOROD7VETER')).toContain('NEEDS_LOWERCASE');
-  });
-
-  it('требует цифру', () => {
-    expect(checkPassword('GorodVeter')).toContain('NEEDS_DIGIT');
+  it('не требует заглавных букв и цифр', () => {
+    expect(checkPassword('gorodveter')).toEqual([]);
+    expect(checkPassword('городветер')).toEqual([]);
+    expect(checkPassword('krylo samoleta')).toEqual([]);
   });
 
   it('не пропускает короткий пароль', () => {
-    expect(checkPassword('Ab3cd')).toContain('TOO_SHORT');
+    expect(checkPassword('Ab3cdef')).toContain('TOO_SHORT');
+    expect(checkPassword('Ab3cdefg')).not.toContain('TOO_SHORT');
   });
 
   it('не пропускает слишком длинный пароль', () => {
@@ -35,9 +26,10 @@ describe('checkPassword', () => {
     expect(checkPassword('Пароль2026')).toContain('TOO_COMMON');
   });
 
-  it('не пропускает повтор одного символа и подряд идущие символы', () => {
-    expect(checkPassword('Aaaaaaaaaaa1')).not.toContain('TOO_SHORT');
+  it('не пропускает повтор одного символа, одни цифры и подряд идущие символы', () => {
+    expect(checkPassword('aaaaaaaaaa')).toContain('TOO_COMMON');
     expect(checkPassword('1234567890')).toContain('TOO_COMMON');
+    expect(checkPassword('20261115')).toContain('TOO_COMMON');
     expect(checkPassword('abcdefghijkl')).toContain('TOO_COMMON');
   });
 
@@ -61,9 +53,7 @@ describe('checkPassword', () => {
   });
 
   it('возвращает все нарушения сразу, а не первое', () => {
-    const problems = checkPassword('abc', personalHints({ name: 'abcdef' }));
-    expect(problems).toContain('TOO_SHORT');
-    expect(problems).toContain('NEEDS_UPPERCASE');
-    expect(problems).toContain('NEEDS_DIGIT');
+    const problems = checkPassword('qwerty', personalHints({ name: 'qwerty' }));
+    expect(problems).toEqual(['TOO_SHORT', 'TOO_COMMON', 'CONTAINS_PERSONAL']);
   });
 });

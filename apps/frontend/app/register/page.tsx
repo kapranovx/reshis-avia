@@ -22,8 +22,14 @@ export default function RegisterPage() {
     email: '',
     password: '',
   });
+  // Повтор пароля проверяется только здесь и на сервер не уходит.
+  const [confirm, setConfirm] = React.useState('');
+  const [confirmTouched, setConfirmTouched] = React.useState(false);
+  const confirmRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, setPending] = React.useState(false);
+
+  const mismatch = confirmTouched && confirm !== values.password;
 
   const change =
     (field: keyof typeof values) =>
@@ -38,6 +44,12 @@ export default function RegisterPage() {
     const [problem] = checkPassword(values.password, personalHints(values));
     if (problem) {
       setError(PASSWORD_PROBLEM_MESSAGE[problem]);
+      return;
+    }
+    if (confirm !== values.password) {
+      setError(null);
+      setConfirmTouched(true);
+      confirmRef.current?.focus();
       return;
     }
 
@@ -90,7 +102,7 @@ export default function RegisterPage() {
         <Field
           id="password"
           label="Пароль"
-          hint={<PasswordRules {...values} />}
+          hint={values.password ? <PasswordRules {...values} /> : undefined}
         >
           <Input
             name="password"
@@ -99,6 +111,24 @@ export default function RegisterPage() {
             autoComplete="new-password"
             value={values.password}
             onChange={change('password')}
+            disabled={pending}
+          />
+        </Field>
+        <Field
+          id="password-confirm"
+          label="Повтор пароля"
+          error={mismatch ? 'Пароли не совпадают' : undefined}
+        >
+          <Input
+            ref={confirmRef}
+            type="password"
+            required
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(event) => setConfirm(event.target.value)}
+            onBlur={() => {
+              if (confirm) setConfirmTouched(true);
+            }}
             disabled={pending}
           />
         </Field>

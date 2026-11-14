@@ -104,12 +104,30 @@ describe('Аутентификация', () => {
     });
 
     it('называет нарушенное правило пароля', async () => {
-      const res = await request(ctx.server)
+      const short = await request(ctx.server)
+        .post(`${P}/auth/signup`)
+        .send({ name: 'Анна', email: 'anna@example.com', password: 'krylo7' })
+        .expect(400);
+      expect(envelope(short).error?.message).toBe('Пароль короче 8 символов');
+
+      const common = await request(ctx.server)
         .post(`${P}/auth/signup`)
         .send({ name: 'Анна', email: 'anna@example.com', password: 'qwerty12' })
         .expect(400);
+      expect(envelope(common).error?.message).toBe(
+        'Такой пароль слишком часто встречается',
+      );
+    });
 
-      expect(envelope(res).error?.message).toBe('Нужна заглавная буква');
+    it('принимает пароль без заглавных букв и цифр', async () => {
+      await request(ctx.server)
+        .post(`${P}/auth/signup`)
+        .send({
+          name: 'Анна',
+          email: 'anna@example.com',
+          password: 'krylo-samoleta',
+        })
+        .expect(201);
     });
 
     it('не принимает пароль, повторяющий почту', async () => {

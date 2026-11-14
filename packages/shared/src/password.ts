@@ -1,4 +1,7 @@
 // Правила пароля, общие для фронта и бэка.
+// Требований к составу нет. Заглавные и цифры люди добавляют предсказуемо
+// (Qwerty1), NIST SP 800-63B советует от них отказаться. Защищают длина,
+// словарь частых паролей и запрет повторять имя и почту.
 
 export const PASSWORD_POLICY = {
   MIN: 8,
@@ -7,20 +10,11 @@ export const PASSWORD_POLICY = {
 } as const;
 
 export type PasswordProblem =
-  | 'TOO_SHORT'
-  | 'TOO_LONG'
-  | 'NEEDS_UPPERCASE'
-  | 'NEEDS_LOWERCASE'
-  | 'NEEDS_DIGIT'
-  | 'TOO_COMMON'
-  | 'CONTAINS_PERSONAL';
+  'TOO_SHORT' | 'TOO_LONG' | 'TOO_COMMON' | 'CONTAINS_PERSONAL';
 
 export const PASSWORD_PROBLEM_MESSAGE: Record<PasswordProblem, string> = {
   TOO_SHORT: `Пароль короче ${PASSWORD_POLICY.MIN} символов`,
   TOO_LONG: `Пароль длиннее ${PASSWORD_POLICY.MAX} символов`,
-  NEEDS_UPPERCASE: 'Нужна заглавная буква',
-  NEEDS_LOWERCASE: 'Нужна строчная буква',
-  NEEDS_DIGIT: 'Нужна цифра',
   TOO_COMMON: 'Такой пароль слишком часто встречается',
   CONTAINS_PERSONAL: 'Пароль не должен повторять имя или почту',
 };
@@ -170,11 +164,6 @@ export function checkPassword(
   if (password.length < PASSWORD_POLICY.MIN) problems.push('TOO_SHORT');
   if (password.length > PASSWORD_POLICY.MAX) problems.push('TOO_LONG');
 
-  // Юникодные классы, чтобы кириллица тоже считалась.
-  if (!/\p{Lu}/u.test(password)) problems.push('NEEDS_UPPERCASE');
-  if (!/\p{Ll}/u.test(password)) problems.push('NEEDS_LOWERCASE');
-  if (!/\p{Nd}/u.test(password)) problems.push('NEEDS_DIGIT');
-
   if (
     candidateForms(password).some((form) => COMMON_PASSWORDS.has(form)) ||
     isSingleCharacter(password) ||
@@ -193,7 +182,7 @@ export function checkPassword(
 }
 
 export interface PasswordRuleState {
-  id: 'length' | 'uppercase' | 'lowercase' | 'digit' | 'unique';
+  id: 'length' | 'unique';
   label: string;
   ok: boolean;
 }
@@ -211,21 +200,6 @@ export function passwordRules(
       id: 'length',
       label: `Минимум ${PASSWORD_POLICY.MIN} символов`,
       ok: !has('TOO_SHORT') && !has('TOO_LONG'),
-    },
-    {
-      id: 'uppercase',
-      label: 'Заглавная буква',
-      ok: !has('NEEDS_UPPERCASE'),
-    },
-    {
-      id: 'lowercase',
-      label: 'Строчная буква',
-      ok: !has('NEEDS_LOWERCASE'),
-    },
-    {
-      id: 'digit',
-      label: 'Цифра',
-      ok: !has('NEEDS_DIGIT'),
     },
     {
       id: 'unique',
