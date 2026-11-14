@@ -1,0 +1,49 @@
+# Postgres и Redis для разработки, поднимаются автоматически через npm run dev.
+# Порты только на 127.0.0.1: Docker публикует порты в обход файрвола.
+
+name: reshis-avia
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: reshis-avia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-reshis_avia}
+      POSTGRES_USER: ${POSTGRES_USER:-reshis_avia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reshis_avia_dev_password}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5437}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # При создании тома заодно создаётся база для e2e.
+      - ./infra/postgres/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-reshis_avia} -d ${POSTGRES_DB:-reshis_avia}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: reshis-avia-redis
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6382}:6379'
+    volumes:
+      - redis_data:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

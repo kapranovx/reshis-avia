@@ -1,0 +1,24 @@
+{
+  "name": "reshis-avia",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "predev": "docker compose up -d --wait",
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "format": "turbo format"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.2",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

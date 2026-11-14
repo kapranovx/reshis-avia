@@ -1,0 +1,33 @@
+node_modules/
+
+dist/
+.next/
+out/
+build/
+.turbo/
+*.tsbuildinfo
+coverage/
+next-env.d.ts
+
+# Любые .env*, кроме примеров (в .env.bak и .env.old тоже секреты)
+.env*
+!.env.example
+!.env.*.example
+
+*.log
+npm-debug.log*
+
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Дампы. *.sql не игнорируем, это миграции.
+*.dump
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+
+*.key
+*.pem
