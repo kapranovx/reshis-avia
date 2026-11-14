@@ -19,13 +19,33 @@ const firaExtraCondensed = Fira_Sans_Extra_Condensed({
   display: 'swap',
 });
 
+const TITLE = 'Решись Авиа — прогноз продаж';
+const DESCRIPTION =
+  'Сколько людей захотят купить билет на рейс и сколько купят с учётом мест в самолёте';
+
+// Адрес сайта берём из адреса API, который и так задаётся при сборке:
+// https://avia.aexd.ru/api/v1 → https://avia.aexd.ru. Он нужен, чтобы ссылка
+// на картинку превью (app/opengraph-image.png) была абсолютной.
+const SITE_URL = new URL(
+  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3500',
+).origin;
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Решись Авиа — прогноз продаж',
+    default: TITLE,
     template: '%s — Решись Авиа',
   },
-  description:
-    'Сколько людей захотят купить билет на рейс и сколько купят с учётом мест в самолёте',
+  description: DESCRIPTION,
+  // Картинка превью — снимок главной 1200x630. Если главная заметно
+  // изменится, её стоит переснять.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: 'Решись Авиа',
+    locale: 'ru_RU',
+    type: 'website',
+  },
 };
 
 export const viewport: Viewport = {

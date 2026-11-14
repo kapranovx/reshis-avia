@@ -252,6 +252,7 @@ export function ForecastView() {
           <DateField
             value={form.date}
             route={route}
+            price={typeof query === 'object' && query ? query.price : null}
             onChange={(date) => update({ date })}
           />
           <PriceField
@@ -304,6 +305,7 @@ export function ForecastView() {
                 forecast={result}
                 updating={updating}
                 heroRef={heroRef}
+                onUsePrice={(price) => update({ price: String(price) })}
               />
               <div className="mt-7">
                 <DemandChart forecast={result} />

@@ -1,4 +1,10 @@
-import type { Forecast, ForecastQuery, RouteInfo } from '@reshis-avia/shared';
+import type {
+  Forecast,
+  ForecastCalendarQuery,
+  ForecastDay,
+  ForecastQuery,
+  RouteInfo,
+} from '@reshis-avia/shared';
 import { apiFetch } from './client';
 
 export const forecastApi = {
@@ -12,5 +18,17 @@ export const forecastApi = {
       price: String(query.price),
     });
     return apiFetch<Forecast>(`/forecast?${params}`, { signal });
+  },
+
+  calendar: (
+    query: ForecastCalendarQuery,
+    signal?: AbortSignal,
+  ): Promise<ForecastDay[]> => {
+    const params = new URLSearchParams({
+      origin: query.origin,
+      destination: query.destination,
+      price: String(query.price),
+    });
+    return apiFetch<ForecastDay[]>(`/forecast/calendar?${params}`, { signal });
   },
 };

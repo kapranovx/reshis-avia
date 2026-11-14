@@ -32,6 +32,24 @@ export function formatRubles(value: number): string {
   return `${INTEGER.format(Math.round(value))} ₽`;
 }
 
+const MILLIONS = new Intl.NumberFormat('ru-RU', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+// Крупные суммы коротко: 4 017 600 → 4,02 млн ₽, 45 503 → 46 тыс. ₽.
+export function formatMoney(value: number): string {
+  const sign = value < 0 ? '−' : '';
+  const abs = Math.abs(value);
+  if (Math.round(abs / 1000) >= 1000) {
+    return `${sign}${MILLIONS.format(abs / 1_000_000)} млн ₽`;
+  }
+  if (abs >= 1000) {
+    return `${sign}${INTEGER.format(Math.round(abs / 1000))} тыс. ₽`;
+  }
+  return `${sign}${INTEGER.format(Math.round(abs))} ₽`;
+}
+
 // 2026-06-01 → 1 июня
 export function formatDay(isoDate: string): string {
   return DATE_LONG.format(utcDate(isoDate));

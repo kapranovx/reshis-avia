@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { RouteInfo } from '@reshis-avia/shared';
+import type { DayButtonProps, Modifiers } from 'react-day-picker';
+import type { ForecastDay, RouteInfo } from '@reshis-avia/shared';
+import { forecastApi } from '@/lib/api/forecast';
 import { cn } from '@/lib/cn';
 import { isoToLocalDate, localDateToIso, shiftIsoDate } from '@/lib/dates';
 import { formatDay, formatDayWithWeekday, formatRubles } from '@/lib/format';
@@ -111,18 +113,110 @@ function AirportCode({ children }: { children: string }) {
   );
 }
 
+// Загрузка рейсов по датам при текущей цене, для полос в календаре.
+// Запрашивается, только пока календарь открыт. Ошибка не мешает выбрать дату:
+// календарь просто остаётся без полос.
+function useDayLoads(
+  open: boolean,
+  route: RouteInfo,
+  price: number | null,
+): Map<string, ForecastDay> | null {
+  const key = price === null ? null : `${route.route}|${price}`;
+  const [loaded, setLoaded] = React.useState<{
+    key: string;
+    days: Map<string, ForecastDay>;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!open || key === null || price === null || loaded?.key === key) return;
+    const controller = new AbortController();
+    forecastApi
+      .calendar(
+        { origin: route.origin, destination: route.destination, price },
+        controller.signal,
+      )
+      .then(
+        (list) =>
+          setLoaded({ key, days: new Map(list.map((d) => [d.date, d])) }),
+        () => undefined,
+      );
+    return () => controller.abort();
+  }, [open, key, price, route.origin, route.destination, loaded?.key]);
+
+  return loaded?.key === key ? loaded.days : null;
+}
+
+// Через контекст, а не через замыкание: компонент дня должен быть одним и тем
+// же, иначе DayPicker пересоздаёт кнопки и теряет фокус.
+const DayLoadsContext = React.createContext<Map<string, ForecastDay> | null>(
+  null,
+);
+
+// Кнопка дня с тонкой полосой загрузки под числом. Оранжевая — мест не хватит.
+function LoadDayButton({ day, modifiers, children, ...props }: DayButtonProps) {
+  const loads = React.useContext(DayLoadsContext);
+  const info = modifiers.disabled
+    ? undefined
+    : loads?.get(localDateToIso(day.date));
+  const load = info ? Math.min(1, info.sales / info.seats) : 0;
+
+  return (
+    <button {...props} className={cn(props.className, 'relative')}>
+      {children}
+      {info && (
+        <span
+          aria-hidden
+          className="absolute inset-x-[24%] bottom-[5px] h-[3px] overflow-hidden rounded-full"
+        >
+          <span className="absolute inset-0 bg-current opacity-20" />
+          <span
+            className={cn(
+              'absolute inset-y-0 left-0 rounded-full',
+              info.limitedBySeats && !modifiers.selected
+                ? 'bg-[var(--color-chart-over)]'
+                : 'bg-current',
+            )}
+            style={{ width: `${load * 100}%` }}
+          />
+        </span>
+      )}
+    </button>
+  );
+}
+
+const DAY_COMPONENTS = { DayButton: LoadDayButton };
+
 export function DateField({
   value,
   route,
+  price,
   onChange,
 }: {
   value: string;
   route: RouteInfo;
+  // Цена из формы. Без неё календарь показывается без загрузки.
+  price: number | null;
   onChange: (isoDate: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const loads = useDayLoads(open, route, price);
   const first = isoToLocalDate(route.dateFrom);
   const last = isoToLocalDate(route.dateTo);
+
+  const dayLabel = (date: Date, modifiers: Modifiers) => {
+    const iso = localDateToIso(date);
+    const info = modifiers.disabled ? undefined : loads?.get(iso);
+    const parts = [formatDayWithWeekday(iso)];
+    if (modifiers.selected) parts.push('выбрана');
+    if (info) {
+      parts.push(
+        info.limitedBySeats
+          ? 'мест не хватит'
+          : `загрузка ${Math.round((info.sales / info.seats) * 100)}%`,
+      );
+    }
+    return parts.join(', ');
+  };
 
   return (
     <div className="space-y-1.5">
@@ -155,21 +249,33 @@ export function DateField({
             </button>
           </PopoverTrigger>
           <PopoverContent aria-labelledby="date-label">
-            <Calendar
-              mode="single"
-              required
-              autoFocus
-              selected={isoToLocalDate(value)}
-              defaultMonth={isoToLocalDate(value)}
-              startMonth={first}
-              endMonth={last}
-              disabled={[{ before: first }, { after: last }]}
-              onSelect={(date) => {
-                if (!date) return;
-                onChange(localDateToIso(date));
-                setOpen(false);
-              }}
-            />
+            <DayLoadsContext value={loads}>
+              <Calendar
+                mode="single"
+                required
+                autoFocus
+                selected={isoToLocalDate(value)}
+                defaultMonth={isoToLocalDate(value)}
+                startMonth={first}
+                endMonth={last}
+                disabled={[{ before: first }, { after: last }]}
+                components={DAY_COMPONENTS}
+                labels={{ labelDayButton: dayLabel }}
+                onSelect={(date) => {
+                  if (!date) return;
+                  onChange(localDateToIso(date));
+                  setOpen(false);
+                }}
+              />
+            </DayLoadsContext>
+            {loads && price !== null && (
+              <p className="max-w-[18.5rem] border-t border-[var(--color-border)] px-3 py-2.5 text-xs leading-relaxed text-[var(--color-fg-muted)]">
+                Полоса под датой — загрузка рейса при цене{' '}
+                <span className="whitespace-nowrap">{formatRubles(price)}</span>.
+                {[...loads.values()].some((d) => d.limitedBySeats) &&
+                  ' Оранжевая — мест не хватит всем желающим.'}
+              </p>
+            )}
           </PopoverContent>
         </Popover>
         <StepButton

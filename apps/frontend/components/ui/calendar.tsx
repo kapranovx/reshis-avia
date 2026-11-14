@@ -10,6 +10,7 @@ import { cn } from '@/lib/cn';
 export function Calendar({
   className,
   classNames,
+  components,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   return (
@@ -43,7 +44,7 @@ export function Calendar({
         hidden: 'invisible',
         ...classNames,
       }}
-      components={{ Chevron }}
+      components={{ Chevron, ...components }}
       {...props}
     />
   );

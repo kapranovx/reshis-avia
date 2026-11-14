@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn';
 import {
   formatDay,
   formatDayWithWeekday,
+  formatMoney,
   formatNumber,
   formatPeople,
   formatRubles,
@@ -21,10 +22,13 @@ export function ForecastResult({
   forecast,
   updating,
   heroRef,
+  onUsePrice,
 }: {
   forecast: Forecast;
   updating: boolean;
   heroRef?: React.Ref<HTMLDivElement>;
+  // Подставить цену в форму: кнопка «Применить» у лучшей цены.
+  onUsePrice?: (price: number) => void;
 }) {
   const sales = roundPeople(forecast.simple.sales);
   const free = Math.max(0, forecast.seats - sales);
@@ -33,6 +37,11 @@ export function ForecastResult({
   const filled = Math.round((load / 100) * SEGMENTS);
   const [origin, destination] = forecast.route.split('-');
   const [originName, destinationName] = forecast.name.split(' — ');
+  const { pricing } = forecast;
+  const atBest = forecast.price === pricing.bestPrice;
+  // Вне обычного диапазона прибыль может оказаться и выше «лучшей»:
+  // лучшая цена ищется только внутри диапазона.
+  const gain = pricing.bestMargin - pricing.margin;
 
   return (
     <div>
@@ -108,7 +117,7 @@ export function ForecastResult({
         </p>
       </div>
 
-      <dl className="mt-6 grid grid-cols-2 gap-x-6 border-y border-[var(--color-border)] py-4">
+      <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-[var(--color-border)] py-4">
         <Fact
           label="Хотят купить (медиана)"
           value={formatPeople(forecast.simple.wants)}
@@ -123,6 +132,35 @@ export function ForecastResult({
         ) : (
           <Fact label="Свободно мест" value={formatNumber(free)} />
         )}
+        <Fact
+          label="Лучшая цена по прогнозу"
+          value={formatRubles(pricing.bestPrice)}
+          note={
+            atBest ? (
+              'Это текущая цена'
+            ) : onUsePrice ? (
+              <button
+                type="button"
+                onClick={() => onUsePrice(pricing.bestPrice)}
+                aria-label={`Применить лучшую цену ${formatRubles(pricing.bestPrice)}`}
+                className="cursor-pointer font-medium text-[var(--color-accent)] underline underline-offset-4 hover:no-underline"
+              >
+                Применить
+              </button>
+            ) : undefined
+          }
+        />
+        <Fact
+          label="Маржинальная прибыль"
+          value={formatMoney(pricing.margin)}
+          note={
+            atBest
+              ? 'Наибольшая для рейса'
+              : gain >= 1
+                ? `При лучшей цене на ${formatMoney(gain)} больше`
+                : undefined
+          }
+        />
       </dl>
 
       {(forecast.limitedBySeats || forecast.priceOutOfRange) && (
@@ -166,20 +204,23 @@ function Fact({
   label,
   value,
   unit,
+  note,
   tone,
 }: {
   label: string;
   value: string;
   unit?: string;
+  note?: React.ReactNode;
   tone?: 'over';
 }) {
-  // Подпись может уйти на две строки, значения при этом стоят на одной линии.
+  // Подпись, значение и примечание — три общие строки сетки (subgrid): если
+  // у соседа подпись или примечание длиннее, значения всё равно на одной линии.
   return (
-    <div className="flex min-w-0 flex-col justify-between">
-      <dt className="text-sm text-[var(--color-fg-muted)]">{label}</dt>
+    <div className="row-span-3 grid min-w-0 grid-rows-subgrid gap-y-1">
+      <dt className="self-end text-sm text-[var(--color-fg-muted)]">{label}</dt>
       <dd
         className={cn(
-          'mt-1 font-[family-name:var(--font-display)] text-[1.75rem] leading-none font-semibold tabular-nums',
+          'font-[family-name:var(--font-display)] text-[1.75rem] leading-none font-semibold tabular-nums',
           tone === 'over' && 'text-[var(--color-chart-over)]',
         )}
       >
@@ -190,6 +231,12 @@ function Fact({
           </span>
         )}
       </dd>
+      {note ? (
+        <dd className="text-sm text-[var(--color-fg-muted)]">{note}</dd>
+      ) : (
+        // Пустая третья строка: внутри dl допустимы только dt и dd.
+        <dd aria-hidden />
+      )}
     </div>
   );
 }
