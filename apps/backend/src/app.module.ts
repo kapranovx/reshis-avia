@@ -9,6 +9,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { loggerConfig } from './common/logger.config';
 import { throttlerConfig } from './common/throttler.config';
 import { AuthModule } from './modules/auth/auth.module';
+import { ForecastModule } from './modules/forecast/forecast.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -21,6 +22,7 @@ import { RedisModule } from './redis/redis.module';
     PrismaModule,
     RedisModule,
     AuthModule,
+    ForecastModule,
     HealthModule,
   ],
   providers: [

@@ -1,6 +1,6 @@
 interface EnvRule {
   key: string;
-  required: 'always' | 'production';
+  required: 'always' | 'production' | 'optional';
   check?: (value: string) => string | null;
   hint?: string;
 }
@@ -34,6 +34,17 @@ const RULES: EnvRule[] = [
         ? null
         : 'целое число: от него зависит, по чьему IP считаются лимиты',
   },
+  // Без значения берутся data/seasonal_forecast.csv и data/routes.csv.
+  {
+    key: 'FORECAST_CSV',
+    required: 'optional',
+    check: (v) => (/\.csv$/i.test(v) ? null : 'путь к файлу .csv'),
+  },
+  {
+    key: 'ROUTES_CSV',
+    required: 'optional',
+    check: (v) => (/\.csv$/i.test(v) ? null : 'путь к файлу .csv'),
+  },
 ];
 
 export function validateEnv(
@@ -47,7 +58,10 @@ export function validateEnv(
     const present = typeof value === 'string' && value.trim() !== '';
 
     if (!present) {
-      if (rule.required === 'always' || isProd) {
+      if (
+        rule.required === 'always' ||
+        (rule.required === 'production' && isProd)
+      ) {
         problems.push(
           `${rule.key} не задана${rule.hint ? ` (${rule.hint})` : ''}`,
         );
