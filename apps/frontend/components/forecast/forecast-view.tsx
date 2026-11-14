@@ -293,7 +293,7 @@ export function ForecastView() {
           aria-label="Результат прогноза"
           aria-busy={updating}
           className={cn(
-            'min-w-0 scroll-mt-24 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-opacity motion-reduce:transition-none sm:p-6',
+            'board min-w-0 scroll-mt-24 rounded-[var(--radius-lg)] p-5 transition-opacity motion-reduce:transition-none sm:p-7',
             // Форма с ошибкой: цифры относятся к прошлому расчёту.
             visibleError && result && 'opacity-50',
           )}
@@ -305,7 +305,7 @@ export function ForecastView() {
                 updating={updating}
                 heroRef={heroRef}
               />
-              <div className="mt-6 border-t border-[var(--color-border)] pt-6">
+              <div className="mt-7">
                 <DemandChart forecast={result} />
               </div>
             </>
@@ -320,7 +320,7 @@ export function ForecastView() {
       </div>
 
       {result && heroBelow && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)]/95 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+        <div className="board fixed inset-x-0 bottom-0 z-40 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
             onClick={() =>
@@ -339,7 +339,7 @@ export function ForecastView() {
               ) : (
                 <>
                   Купят{' '}
-                  <span className="text-lg font-semibold text-[var(--color-fg)] tabular-nums">
+                  <span className="font-[family-name:var(--font-display)] text-xl font-semibold text-[var(--color-fg)] tabular-nums">
                     {formatNumber(roundPeople(result.simple.sales))}
                   </span>{' '}
                   из {formatNumber(result.seats)}{' '}

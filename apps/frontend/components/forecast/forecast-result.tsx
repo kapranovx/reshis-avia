@@ -1,7 +1,10 @@
-import { TriangleAlert } from 'lucide-react';
+import { Plane, TriangleAlert } from 'lucide-react';
 import type { Forecast } from '@reshis-avia/shared';
+import { Flap } from '@/components/ui/flap';
+import { cn } from '@/lib/cn';
 import {
   formatDay,
+  formatDayWithWeekday,
   formatNumber,
   formatPeople,
   formatRubles,
@@ -11,6 +14,8 @@ import {
 
 const SEATS = ['места', 'мест', 'мест'] as const;
 const PEOPLE = ['человека', 'человека', 'человек'] as const;
+// Деления полосы загрузки, как ряды кресел в салоне.
+const SEGMENTS = 30;
 
 export function ForecastResult({
   forecast,
@@ -22,69 +27,106 @@ export function ForecastResult({
   heroRef?: React.Ref<HTMLDivElement>;
 }) {
   const sales = roundPeople(forecast.simple.sales);
+  const free = Math.max(0, forecast.seats - sales);
   const unmet = Math.round(forecast.simple.wants - forecast.seats);
   const load = Math.min(100, Math.round((sales / forecast.seats) * 100));
+  const filled = Math.round((load / 100) * SEGMENTS);
+  const [origin, destination] = forecast.route.split('-');
+  const [originName, destinationName] = forecast.name.split(' — ');
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-lg font-semibold tracking-[-0.01em]">
-          {forecast.name}, {formatDay(forecast.date)}
+      {/* Шапка как на посадочном талоне: коды аэропортов, дата и цена. */}
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <h2>
+          <span className="sr-only">
+            {forecast.name}, {formatDay(forecast.date)}
+          </span>
+          <span aria-hidden className="flex items-start gap-3 sm:gap-4">
+            <Airport code={origin} name={originName} />
+            <Plane className="mt-3 size-6 shrink-0 text-[var(--color-signal)] sm:mt-4 sm:size-7" />
+            <Airport code={destination} name={destinationName} />
+          </span>
         </h2>
-        <p className="text-sm text-[var(--color-fg-muted)] tabular-nums">
-          {updating
-            ? 'Пересчитываем…'
-            : `Билет ${formatRubles(forecast.price)}`}
-        </p>
+        <div className="text-sm sm:text-right">
+          <p className="text-[var(--color-fg-muted)]">
+            {formatDayWithWeekday(forecast.date)}
+          </p>
+          <p className="mt-0.5 font-medium tabular-nums">
+            {updating ? 'Пересчитываем…' : `Билет ${formatRubles(forecast.price)}`}
+          </p>
+        </div>
       </div>
 
       <div
+        ref={heroRef}
         aria-live="polite"
-        className="mt-5 grid gap-x-10 gap-y-5 sm:grid-cols-[minmax(0,1fr)_15rem] sm:items-end"
+        className="mt-6 border-t border-[var(--color-border)] pt-6"
       >
-        <div ref={heroRef}>
-          <p className="text-sm text-[var(--color-fg-muted)]">
-            Купят (прогноз продаж)
-          </p>
-          <p className="mt-1 flex flex-wrap items-baseline gap-x-2.5">
-            <span className="text-5xl leading-none font-semibold tracking-[-0.03em] tabular-nums">
-              {formatNumber(sales)}
-            </span>
-            <span className="text-lg text-[var(--color-fg-muted)]">
-              из {formatNumber(forecast.seats)}{' '}
-              {plural(forecast.seats, [...SEATS])}
-            </span>
-          </p>
-          <div
-            role="meter"
-            aria-label="Загрузка рейса"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={load}
-            aria-valuetext={`${load}%`}
-            className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--color-accent-track)]"
-          >
-            <div
-              className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-300 motion-reduce:transition-none"
-              style={{ width: `${load}%` }}
-            />
-          </div>
-          <p className="mt-1.5 text-sm text-[var(--color-fg-muted)] tabular-nums">
-            Загрузка рейса {load}%
-          </p>
-        </div>
-
-        <dl className="divide-y divide-[var(--color-border)] border-y border-[var(--color-border)] text-sm">
-          <Fact
-            label="Хотят купить (медиана)"
-            value={formatPeople(forecast.simple.wants)}
+        <p className="text-sm text-[var(--color-fg-muted)]">
+          Купят, прогноз продаж
+        </p>
+        <p className="mt-2.5 flex flex-wrap items-end gap-x-4 gap-y-2">
+          <span className="sr-only">{formatNumber(sales)}</span>
+          <Flap
+            text={String(sales)}
+            length={String(forecast.seats).length}
+            className={cn(
+              'text-[3.5rem] transition-opacity sm:text-[4.5rem]',
+              updating && 'opacity-60',
+            )}
           />
-          <Fact label="Мест в самолёте" value={formatNumber(forecast.seats)} />
-        </dl>
+          <span className="pb-1 text-lg text-[var(--color-fg-muted)]">
+            из {formatNumber(forecast.seats)}{' '}
+            {plural(forecast.seats, [...SEATS])}
+          </span>
+        </p>
+
+        <div
+          role="meter"
+          aria-label="Загрузка рейса"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={load}
+          aria-valuetext={`${load}%`}
+          className="mt-5 grid h-3 grid-cols-[repeat(30,minmax(0,1fr))] gap-[3px]"
+        >
+          {Array.from({ length: SEGMENTS }, (_, i) => (
+            <span
+              key={i}
+              className={cn(
+                'rounded-[1px] transition-colors duration-300 motion-reduce:transition-none',
+                i < filled
+                  ? 'bg-[var(--color-signal)]'
+                  : 'bg-[var(--color-accent-track)]',
+              )}
+            />
+          ))}
+        </div>
+        <p className="mt-2 text-sm text-[var(--color-fg-muted)] tabular-nums">
+          Загрузка рейса {load}%
+        </p>
       </div>
 
+      <dl className="mt-6 grid grid-cols-2 gap-x-6 border-y border-[var(--color-border)] py-4">
+        <Fact
+          label="Хотят купить (медиана)"
+          value={formatPeople(forecast.simple.wants)}
+        />
+        {unmet >= 1 ? (
+          <Fact
+            label="Не хватит мест"
+            value={formatNumber(unmet)}
+            unit={plural(unmet, [...PEOPLE])}
+            tone="over"
+          />
+        ) : (
+          <Fact label="Свободно мест" value={formatNumber(free)} />
+        )}
+      </dl>
+
       {(forecast.limitedBySeats || forecast.priceOutOfRange) && (
-        <div className="mt-5 space-y-2">
+        <div className="mt-4 space-y-2">
           {forecast.limitedBySeats && (
             <Notice>
               Продажи упираются в число мест
@@ -109,11 +151,45 @@ export function ForecastResult({
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Airport({ code, name }: { code: string; name: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-2.5">
-      <dt className="text-[var(--color-fg-muted)]">{label}</dt>
-      <dd className="text-lg font-semibold tabular-nums">{value}</dd>
+    <span className="flex min-w-0 flex-col">
+      <span className="font-[family-name:var(--font-display)] text-[2.75rem] leading-none font-bold tracking-[0.04em] sm:text-5xl">
+        {code}
+      </span>
+      <span className="mt-1 text-sm text-[var(--color-fg-muted)]">{name}</span>
+    </span>
+  );
+}
+
+function Fact({
+  label,
+  value,
+  unit,
+  tone,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  tone?: 'over';
+}) {
+  // Подпись может уйти на две строки, значения при этом стоят на одной линии.
+  return (
+    <div className="flex min-w-0 flex-col justify-between">
+      <dt className="text-sm text-[var(--color-fg-muted)]">{label}</dt>
+      <dd
+        className={cn(
+          'mt-1 font-[family-name:var(--font-display)] text-[1.75rem] leading-none font-semibold tabular-nums',
+          tone === 'over' && 'text-[var(--color-chart-over)]',
+        )}
+      >
+        {value}
+        {unit && (
+          <span className="ml-1.5 font-[family-name:var(--font-sans)] text-sm font-normal">
+            {unit}
+          </span>
+        )}
+      </dd>
     </div>
   );
 }

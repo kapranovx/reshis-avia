@@ -57,15 +57,18 @@ export function RoutePicker({
       ) : (
         <div>
           <p className="text-sm font-medium">Откуда</p>
-          <p className="mt-1 text-[15px]">{route.originName}</p>
+          <p className="mt-1.5 flex h-10 items-center gap-3 rounded-[var(--radius-md)] bg-[var(--color-surface-muted)] px-3 text-[15px]">
+            <AirportCode>{route.origin}</AirportCode>
+            {route.originName}
+          </p>
         </div>
       )}
 
       <fieldset>
         <legend className="text-sm font-medium">Куда</legend>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-1.5 grid gap-1.5">
           {destinations.map((r) => (
-            <label key={r.route} className="relative">
+            <label key={r.route} className="relative block">
               <input
                 type="radio"
                 name="destination"
@@ -74,14 +77,19 @@ export function RoutePicker({
                 onChange={() => onChange(r)}
                 className="peer sr-only"
               />
+              {/* Выбранное направление как указатель в аэропорту: тёмное на жёлтом. */}
               <span
                 className={cn(
-                  'inline-flex h-9 cursor-pointer items-center rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm transition-colors pointer-coarse:h-10',
-                  'hover:bg-[var(--color-surface-hover)]',
-                  'peer-checked:border-[var(--color-accent)] peer-checked:bg-[var(--color-accent-subtle)] peer-checked:text-[var(--color-accent)] peer-checked:shadow-[inset_0_0_0_1px_var(--color-accent)]',
+                  'flex h-10 cursor-pointer items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-[15px] transition-colors pointer-coarse:h-11',
+                  // Наведение заранее показывает цвет выбора: тёмная заливка в тёмной теме сливалась с панелью.
+                  'hover:border-[var(--color-signal)] hover:bg-[var(--color-accent-subtle)]',
+                  'peer-checked:border-[var(--color-signal)] peer-checked:bg-[var(--color-signal)] peer-checked:font-medium peer-checked:text-[var(--color-signal-fg)]',
+                  // Выбранная строка при наведении остаётся жёлтой: селектор с :checked и :hover сильнее простого :hover.
+                  'peer-checked:hover:border-[var(--color-signal-hover)] peer-checked:hover:bg-[var(--color-signal-hover)]',
                   'peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--color-accent)]',
                 )}
               >
+                <AirportCode>{r.destination}</AirportCode>
                 {r.destinationName}
               </span>
             </label>
@@ -89,6 +97,17 @@ export function RoutePicker({
         </div>
       </fieldset>
     </>
+  );
+}
+
+// Код аэропорта IATA, как на посадочном талоне. Чтецу хватает названия города.
+function AirportCode({ children }: { children: string }) {
+  return (
+    <span
+      aria-hidden
+      className="w-9 shrink-0 font-[family-name:var(--font-display)] text-lg leading-none font-semibold tracking-[0.06em]">
+      {children}
+    </span>
   );
 }
 

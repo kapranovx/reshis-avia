@@ -173,7 +173,9 @@ export function DemandChart({ forecast }: { forecast: Forecast }) {
   return (
     <figure>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="text-base font-semibold">Распределение спроса</h3>
+        <h3 className="font-[family-name:var(--font-display)] text-[22px] font-semibold tracking-[0.01em]">
+          Распределение спроса
+        </h3>
         <p className="text-xs text-[var(--color-fg-muted)]">
           Хотят купить, чел.
         </p>
