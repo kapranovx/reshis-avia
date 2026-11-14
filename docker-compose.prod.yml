@@ -1,4 +1,4 @@
-# Запуск: docker compose -f docker-compose.prod.yml up -d --build
+# Выкладка на сервере: ./scripts/deploy.sh (сборка, запуск, проверка)
 #
 # Сети:
 #   data (internal)  backend, migrate, postgres, redis

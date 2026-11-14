@@ -49,8 +49,9 @@ npm run dev   # поднимает Postgres и Redis, накатывает ми�
 http://localhost:3501/docs. Порты публикуются только на `127.0.0.1`: Docker
 публикует порт мимо файрвола.
 
-Прод: `docker compose -f docker-compose.prod.yml up -d --build` (переменные —
-раздел «Прод» в `.env.example`).
+Прод: на сервере клон репозитория и `.env` (переменные — раздел «Прод» в
+`.env.example`). Выкладка — `./scripts/deploy.sh` на сервере: git pull,
+сборка, миграции, запуск, проверка снаружи и smoke.
 
 ## Соглашения
 
