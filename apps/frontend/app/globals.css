@@ -1,43 +1,61 @@
 @import 'tailwindcss';
 
+/*
+ * Аэропорт: бетон терминала, графит табло, сигнальный жёлтый указателей.
+ * accent — чернила для ссылок, рамок и фокуса; signal — жёлтая заливка
+ * выбранного и главного действия, текст на ней всегда тёмный.
+ */
 @theme {
-  --color-bg: #f4f5f7;
+  --color-bg: #e2e5e7;
   --color-surface: #ffffff;
-  --color-surface-muted: #eceef1;
-  --color-surface-hover: #e4e6ea;
+  --color-surface-muted: #edeff0;
+  --color-surface-hover: #eef0f2;
 
-  --color-fg: #17181c;
-  --color-fg-muted: #5c5f69;
-  --color-fg-subtle: #5f6270;
+  --color-fg: #111316;
+  --color-fg-muted: #4c525a;
+  --color-fg-subtle: #5d636b;
 
-  --color-border: #d9dbe1;
-  --color-border-strong: #b9bcc6;
+  --color-border: #d2d6da;
+  --color-border-strong: #a3a9b0;
   /* Рамка поля ввода: контраст к фону не ниже 3:1. */
-  --color-input-border: #8a8e99;
+  --color-input-border: #7a8189;
 
-  --color-accent: #2b4acb;
-  --color-accent-hover: #2440ad;
+  --color-accent: #111316;
+  --color-accent-hover: #2b2f35;
   --color-accent-fg: #ffffff;
-  --color-accent-subtle: #eef1fd;
-  --color-accent-track: #d3daf5;
+  --color-accent-subtle: #fff3c4;
+  --color-accent-track: #d2d6da;
 
-  --color-success: #0f7b4f;
-  --color-success-subtle: #e8f5ee;
-  --color-danger: #c02626;
-  --color-danger-subtle: #fdeded;
-  --color-warning: #96620a;
-  --color-warning-subtle: #fdf4e3;
+  --color-signal: #ffc20e;
+  --color-signal-hover: #f0b400;
+  --color-signal-fg: #111316;
 
-  /* Столбцы графика: контраст к фону карточки не ниже 3:1. */
-  --color-chart-neutral: #8a8e99;
-  --color-chart-over: #c4841a;
+  --color-success: #0e7a4e;
+  --color-success-subtle: #e6f4ec;
+  --color-danger: #c42b1c;
+  --color-danger-subtle: #fcebe8;
+  --color-warning: #8a5a00;
+  --color-warning-subtle: #fff4d6;
 
-  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  /* Табло одинаково тёмное в обеих темах. */
+  --color-board: #16181b;
+  --color-board-tile: #25282d;
+  --color-board-tile-low: #202327;
+  --color-board-char: #f2f0e8;
+
+  /* Столбцы графика вне табло: контраст к фону не ниже 3:1. */
+  --color-chart-neutral: #7a8189;
+  --color-chart-over: #d9480f;
+
+  --font-sans: var(--font-fira), ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    var(--font-fira-xc), var(--font-fira), ui-sans-serif, system-ui,
+    sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 }
 
 /* Явно выбранная тема (data-theme) важнее системной в обе стороны. */
@@ -45,68 +63,76 @@
   :root:not([data-theme='light']) {
     color-scheme: dark;
 
-    --color-bg: #101114;
-    --color-surface: #17181c;
-    --color-surface-muted: #1e2025;
-    --color-surface-hover: #26282e;
+    --color-bg: #0d0f11;
+    --color-surface: #16191c;
+    --color-surface-muted: #1c2024;
+    --color-surface-hover: #2a2f35;
 
-    --color-fg: #e8e9ec;
-    --color-fg-muted: #a0a3ad;
-    --color-fg-subtle: #868995;
+    --color-fg: #ecedee;
+    --color-fg-muted: #a4aab1;
+    --color-fg-subtle: #8b9199;
 
-    --color-border: #2a2c33;
-    --color-border-strong: #3b3e47;
-    --color-input-border: #666973;
+    --color-border: #272b30;
+    --color-border-strong: #3a3f46;
+    --color-input-border: #626870;
 
-    --color-accent: #6b86ff;
-    --color-accent-hover: #8098ff;
-    --color-accent-fg: #0d0f14;
-    --color-accent-subtle: #1b2140;
-    --color-accent-track: #252b4a;
+    --color-accent: #ffc20e;
+    --color-accent-hover: #ffd24d;
+    --color-accent-fg: #111316;
+    --color-accent-subtle: #2b2408;
+    --color-accent-track: #2e3338;
 
-    --color-success: #4ac585;
-    --color-success-subtle: #14261d;
-    --color-danger: #ff7070;
-    --color-danger-subtle: #2b1618;
-    --color-warning: #d9a441;
-    --color-warning-subtle: #2c2313;
+    --color-success: #4cc38a;
+    --color-success-subtle: #12261c;
+    --color-danger: #ff6b5e;
+    --color-danger-subtle: #2c1614;
+    --color-warning: #e8b547;
+    --color-warning-subtle: #2a2210;
 
-    --color-chart-neutral: #666973;
-    --color-chart-over: #d9a441;
+    --color-board: #08090b;
+    --color-board-tile: #1d2024;
+    --color-board-tile-low: #181a1e;
+
+    --color-chart-neutral: #6b717a;
+    --color-chart-over: #ff7a4d;
   }
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --color-bg: #101114;
-  --color-surface: #17181c;
-  --color-surface-muted: #1e2025;
-  --color-surface-hover: #26282e;
+  --color-bg: #0d0f11;
+  --color-surface: #16191c;
+  --color-surface-muted: #1c2024;
+  --color-surface-hover: #2a2f35;
 
-  --color-fg: #e8e9ec;
-  --color-fg-muted: #a0a3ad;
-  --color-fg-subtle: #868995;
+  --color-fg: #ecedee;
+  --color-fg-muted: #a4aab1;
+  --color-fg-subtle: #8b9199;
 
-  --color-border: #2a2c33;
-  --color-border-strong: #3b3e47;
-  --color-input-border: #666973;
+  --color-border: #272b30;
+  --color-border-strong: #3a3f46;
+  --color-input-border: #626870;
 
-  --color-accent: #6b86ff;
-  --color-accent-hover: #8098ff;
-  --color-accent-fg: #0d0f14;
-  --color-accent-subtle: #1b2140;
-  --color-accent-track: #252b4a;
+  --color-accent: #ffc20e;
+  --color-accent-hover: #ffd24d;
+  --color-accent-fg: #111316;
+  --color-accent-subtle: #2b2408;
+  --color-accent-track: #2e3338;
 
-  --color-success: #4ac585;
-  --color-success-subtle: #14261d;
-  --color-danger: #ff7070;
-  --color-danger-subtle: #2b1618;
-  --color-warning: #d9a441;
-  --color-warning-subtle: #2c2313;
+  --color-success: #4cc38a;
+  --color-success-subtle: #12261c;
+  --color-danger: #ff6b5e;
+  --color-danger-subtle: #2c1614;
+  --color-warning: #e8b547;
+  --color-warning-subtle: #2a2210;
 
-  --color-chart-neutral: #666973;
-  --color-chart-over: #d9a441;
+  --color-board: #08090b;
+  --color-board-tile: #1d2024;
+  --color-board-tile-low: #181a1e;
+
+  --color-chart-neutral: #6b717a;
+  --color-chart-over: #ff7a4d;
 }
 
 :root[data-theme='light'] {
@@ -151,8 +177,8 @@
   }
 
   ::selection {
-    background: var(--color-accent-subtle);
-    color: var(--color-fg);
+    background: var(--color-signal);
+    color: var(--color-signal-fg);
   }
 
   table,
@@ -174,45 +200,137 @@
 }
 
 @layer components {
+  /*
+   * Табло: тёмная панель в обеих темах. Компоненты внутри берут цвета из
+   * тех же переменных, поэтому график, подсказки и таблица перекрашиваются
+   * без отдельных стилей.
+   */
+  .board {
+    color-scheme: dark;
+
+    --color-surface: var(--color-board);
+    --color-surface-muted: #1f2226;
+    --color-surface-hover: #24282d;
+    --color-fg: var(--color-board-char);
+    --color-fg-muted: #a6abb2;
+    --color-fg-subtle: #8f959c;
+    --color-border: #2c3036;
+    --color-border-strong: #3d424a;
+    --color-accent: var(--color-signal);
+    --color-accent-hover: #ffd24d;
+    --color-accent-fg: var(--color-signal-fg);
+    --color-accent-track: #2e3238;
+    --color-warning: var(--color-signal);
+    --color-warning-subtle: rgb(255 194 14 / 0.09);
+    --color-chart-neutral: #6c737d;
+    --color-chart-over: #ff7a4d;
+
+    background: var(--color-surface);
+    color: var(--color-fg);
+    /* В тёмной теме табло темнее страницы, кромка отделяет его от фона. */
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.07);
+  }
+
+  /*
+   * Перекидные таблички табло. Размер задаёт font-size контейнера.
+   * Символ перелистывается, когда меняется: компонент пересоздаёт его
+   * по ключу, и анимация проигрывается заново.
+   */
+  .flap {
+    display: inline-flex;
+    gap: 0.07em;
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .flap-tile {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 0.7em;
+    height: 1.16em;
+    overflow: hidden;
+    border-radius: 0.09em;
+    background: linear-gradient(
+      var(--color-board-tile) 0 50%,
+      var(--color-board-tile-low) 50% 100%
+    );
+    color: var(--color-board-char);
+    perspective: 4em;
+  }
+  .flap-tile[data-wide] {
+    width: 0.86em;
+  }
+  /* Щель между верхней и нижней половиной таблички. */
+  .flap-tile::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: calc(50% - 0.5px);
+    height: 1px;
+    background: rgb(0 0 0 / 0.6);
+  }
+  .flap-char {
+    display: block;
+    transform-origin: 50% 50%;
+    animation: flap-in 340ms cubic-bezier(0.3, 0.7, 0.25, 1) both;
+    animation-delay: calc(var(--flap-order, 0) * 45ms);
+  }
+
   /* Заполненная часть дорожки показывает выбранную цену. --fill задаёт компонент. */
   .range {
     appearance: none;
-    height: 1.5rem;
+    height: 1.75rem;
     background: transparent;
   }
   .range::-webkit-slider-runnable-track {
-    height: 6px;
+    height: 4px;
     border-radius: 999px;
     background: linear-gradient(
       to right,
-      var(--color-accent) var(--fill, 50%),
+      var(--color-fg) var(--fill, 50%),
       var(--color-accent-track) var(--fill, 50%)
     );
   }
   .range::-moz-range-track {
-    height: 6px;
+    height: 4px;
     border-radius: 999px;
     background: linear-gradient(
       to right,
-      var(--color-accent) var(--fill, 50%),
+      var(--color-fg) var(--fill, 50%),
       var(--color-accent-track) var(--fill, 50%)
     );
   }
   .range::-webkit-slider-thumb {
     appearance: none;
-    width: 20px;
-    height: 20px;
-    margin-top: -7px;
+    width: 22px;
+    height: 22px;
+    margin-top: -9px;
     border-radius: 50%;
-    border: 2px solid var(--color-accent);
-    background: var(--color-surface);
+    border: 2px solid var(--color-fg);
+    background: var(--color-signal);
   }
   .range::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    border: 2px solid var(--color-accent);
-    background: var(--color-surface);
+    border: 2px solid var(--color-fg);
+    background: var(--color-signal);
+  }
+}
+
+@keyframes flap-in {
+  0% {
+    transform: rotateX(-88deg);
+    opacity: 0.25;
+  }
+  70% {
+    transform: rotateX(14deg);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
   }
 }
 
@@ -232,6 +350,9 @@
   }
   figure ul span {
     forced-color-adjust: none;
+  }
+  .flap-tile {
+    border: 1px solid CanvasText;
   }
   .range::-webkit-slider-runnable-track {
     background: Canvas;
@@ -268,5 +389,8 @@
 @media (prefers-reduced-motion: reduce) {
   html {
     transition: none;
+  }
+  .flap-char {
+    animation: none;
   }
 }

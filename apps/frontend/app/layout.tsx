@@ -1,11 +1,21 @@
 import type { Metadata, Viewport } from 'next';
-import { Onest } from 'next/font/google';
+import { Fira_Sans, Fira_Sans_Extra_Condensed } from 'next/font/google';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import './globals.css';
 
-const onest = Onest({
+// Fira Sans из шрифтовой линии навигационных систем: текст интерфейса.
+// Узкое начертание: коды аэропортов, табло и крупные числа.
+const fira = Fira_Sans({
+  weight: ['400', '500', '600'],
   subsets: ['latin', 'cyrillic'],
-  variable: '--font-onest',
+  variable: '--font-fira',
+  display: 'swap',
+});
+
+const firaExtraCondensed = Fira_Sans_Extra_Condensed({
+  weight: ['500', '600', '700'],
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-fira-xc',
   display: 'swap',
 });
 
@@ -20,8 +30,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4f5f7' },
-    { media: '(prefers-color-scheme: dark)', color: '#101114' },
+    { media: '(prefers-color-scheme: light)', color: '#e2e5e7' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d0f11' },
   ],
   colorScheme: 'light dark',
 };
@@ -32,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${onest.variable} antialiased`}
+      className={`${fira.variable} ${firaExtraCondensed.variable} antialiased`}
       suppressHydrationWarning
     >
       <head>

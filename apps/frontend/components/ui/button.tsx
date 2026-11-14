@@ -9,10 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Главное действие как аэропортовый указатель: тёмный текст на жёлтом.
         primary:
-          'bg-[var(--color-accent)] text-[var(--color-accent-fg)] hover:bg-[var(--color-accent-hover)]',
+          'bg-[var(--color-signal)] font-semibold text-[var(--color-signal-fg)] hover:bg-[var(--color-signal-hover)]',
         secondary:
-          'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-fg)] hover:bg-[var(--color-surface-hover)]',
+          'border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-fg)] hover:bg-[var(--color-surface-hover)]',
         ghost:
           'text-[var(--color-fg-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-fg)]',
         danger:

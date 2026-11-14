@@ -37,7 +37,7 @@ export function Calendar({
         day_button:
           'size-[var(--day-size)] cursor-pointer rounded-[var(--radius-md)] text-sm tabular-nums transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-default disabled:hover:bg-transparent',
         selected:
-          '[&>button]:bg-[var(--color-accent)] [&>button]:font-semibold [&>button]:text-[var(--color-accent-fg)] [&>button]:hover:bg-[var(--color-accent-hover)]',
+          '[&>button]:bg-[var(--color-signal)] [&>button]:font-semibold [&>button]:text-[var(--color-signal-fg)] [&>button]:hover:bg-[var(--color-signal-hover)]',
         disabled: 'text-[var(--color-fg-subtle)] opacity-40',
         outside: 'invisible',
         hidden: 'invisible',
