@@ -214,15 +214,45 @@
     border: 2px solid var(--color-accent);
     background: var(--color-surface);
   }
+}
 
-  /* Стрелки у числового поля меняют цену на 1 ₽, пользы от них нет. */
-  .no-spin {
-    appearance: textfield;
+@media (forced-colors: active) {
+  figure {
+    --color-chart-neutral: GrayText;
+    --color-chart-over: CanvasText;
+    --color-accent: Highlight;
+    --color-fg: CanvasText;
+    --color-fg-muted: CanvasText;
+    --color-border: GrayText;
+    --color-surface: Canvas;
+    --color-surface-hover: Canvas;
   }
-  .no-spin::-webkit-inner-spin-button,
-  .no-spin::-webkit-outer-spin-button {
-    appearance: none;
-    margin: 0;
+  figure svg text {
+    fill: CanvasText;
+  }
+  figure ul span {
+    forced-color-adjust: none;
+  }
+  .range::-webkit-slider-runnable-track {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .range::-moz-range-track {
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .range::-webkit-slider-thumb {
+    border-color: Highlight;
+    background: Canvas;
+  }
+  .range::-moz-range-thumb {
+    border-color: Highlight;
+    background: Canvas;
+  }
+  input[type='radio']:checked + span,
+  [aria-selected='true'] > button {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
   }
 }
 

@@ -54,7 +54,7 @@ function summary(points: Point[], price: number): string {
   if (over === points.length) {
     return 'Во всех 9 сценариях мест не хватит всем желающим';
   }
-  return `В ${over} из 9 сценариев мест не хватит всем желающим`;
+  return `В ${over === 1 ? 'одном' : over} из 9 сценариев мест не хватит всем желающим`;
 }
 
 function usePrefersReducedMotion(): boolean {
@@ -242,7 +242,7 @@ export function DemandChart({ forecast }: { forecast: Forecast }) {
       </div>
 
       {/* На телефоне три подписи в строку не помещаются, середина уходит вниз. */}
-      <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 pl-11 text-xs text-[var(--color-fg-muted)] sm:grid-cols-3">
+      <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-[var(--color-fg-muted)] min-[375px]:pl-11 sm:grid-cols-3">
         <span>пессимистичный</span>
         <span className="order-last col-span-2 text-center sm:order-none sm:col-span-1">
           сценарий, %
@@ -250,12 +250,17 @@ export function DemandChart({ forecast }: { forecast: Forecast }) {
         <span className="text-right">оптимистичный</span>
       </div>
 
+      <p className="mt-2 text-xs leading-relaxed text-[var(--color-fg-muted)]">
+        Проценты показывают вероятность того, что спрос окажется ниже значения
+        на столбце. 50% — медиана.
+      </p>
+
       <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-[var(--color-fg-muted)]">
-        {!empty && (
-          <>
-            <Legend color={CHART_COLOR.median}>Медиана</Legend>
-            <Legend color={CHART_COLOR.neutral}>Другие сценарии</Legend>
-          </>
+        {points.some((p) => p.median && p.sales > 0) && (
+          <Legend color={CHART_COLOR.median}>Медиана</Legend>
+        )}
+        {points.some((p) => !p.median && p.sales > 0) && (
+          <Legend color={CHART_COLOR.neutral}>Другие сценарии</Legend>
         )}
         {hasUnmet && <Legend color={CHART_COLOR.over}>Не хватит мест</Legend>}
         <Legend color={CHART_COLOR.seats} dashed>
@@ -282,7 +287,12 @@ function ScenarioTable({ points }: { points: Point[] }) {
         />
         Таблица сценариев
       </summary>
-      <div className="mt-3 overflow-x-auto">
+      <div
+        className="mt-3 overflow-x-auto"
+        role="region"
+        aria-label="Таблица сценариев"
+        tabIndex={0}
+      >
         <table className="w-full text-sm tabular-nums">
           <thead className="text-xs text-[var(--color-fg-muted)]">
             <tr className="border-b border-[var(--color-border)]">

@@ -16,6 +16,7 @@ import {
 import { Select } from '@/components/ui/select';
 
 const SLIDER_STEP = 100;
+const PRICE = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 20 });
 
 const CONTROL =
   'rounded-[var(--radius-md)] border border-[var(--color-input-border)] bg-[var(--color-surface)] text-[var(--color-fg)] transition-colors hover:bg-[var(--color-surface-hover)]';
@@ -129,12 +130,12 @@ export function DateField({
                 'flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center px-2 text-[15px] tabular-nums',
               )}
             >
-              <span id="date-value" className="truncate">
+              <span id="date-value" className="text-center leading-tight">
                 {formatDayWithWeekday(value)}
               </span>
             </button>
           </PopoverTrigger>
-          <PopoverContent>
+          <PopoverContent aria-labelledby="date-label">
             <Calendar
               mode="single"
               required
@@ -199,11 +200,17 @@ export function PriceField({
   value,
   route,
   onChange,
+  invalid = false,
 }: {
   value: string;
   route: RouteInfo;
   onChange: (price: string) => void;
+  invalid?: boolean;
 }) {
+  const [editing, setEditing] = React.useState<{
+    raw: string;
+    text: string;
+  } | null>(null);
   const typed = value.trim() === '' ? NaN : Number(value);
   const slider = Number.isFinite(typed)
     ? Math.min(route.priceMax, Math.max(route.priceMin, typed))
@@ -217,14 +224,38 @@ export function PriceField({
       <div className="relative">
         <Input
           id="price"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          step={1}
-          value={value}
-          aria-describedby="price-range price-base"
-          onChange={(e) => onChange(e.target.value)}
-          className="no-spin pr-9 tabular-nums"
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          spellCheck={false}
+          value={
+            editing?.raw === value
+              ? editing.text
+              : Number.isFinite(typed)
+                ? PRICE.format(typed)
+                : value
+          }
+          aria-invalid={invalid || undefined}
+          aria-describedby={`price-range price-base${invalid ? ' forecast-error' : ''}`}
+          onBlur={() => setEditing(null)}
+          onChange={(e) => {
+            const text = e.target.value;
+            const raw = text.replace(/[\s₽]/g, '').replace(',', '.');
+            setEditing({ raw, text });
+            onChange(raw);
+          }}
+          onKeyDown={(e) => {
+            if (
+              (e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
+              Number.isFinite(typed)
+            ) {
+              e.preventDefault();
+              onChange(
+                String(Math.max(1, typed + (e.key === 'ArrowUp' ? 1 : -1))),
+              );
+            }
+          }}
+          className="pr-9 tabular-nums"
         />
         <span
           aria-hidden

@@ -55,9 +55,6 @@ function toQuery(form: FormState, route: RouteInfo): ForecastQuery | string {
   };
 }
 
-const keyOf = (query: ForecastQuery) =>
-  `${query.origin}-${query.destination}|${query.date}|${query.price}`;
-
 function usePrefersReducedMotion(): boolean {
   return React.useSyncExternalStore(
     (onChange) => {
@@ -83,7 +80,7 @@ export function ForecastView() {
   const [error, setError] = React.useState<string | null>(null);
 
   const requestRef = React.useRef<AbortController | null>(null);
-  const lastKeyRef = React.useRef<string | null>(null);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedRef = React.useRef(false);
   const resultRef = React.useRef<HTMLElement | null>(null);
   const heroRef = React.useRef<HTMLDivElement | null>(null);
@@ -117,12 +114,16 @@ export function ForecastView() {
   }, [attempt, toLogin]);
 
   const route = routes?.find((r) => r.route === form?.route) ?? null;
+  const query = React.useMemo(
+    () => (form && route ? toQuery(form, route) : null),
+    [form, route],
+  );
 
   const calculate = React.useCallback(
     async (query: ForecastQuery | string) => {
       if (typeof query === 'string') {
         requestRef.current?.abort();
-        lastKeyRef.current = null;
+        setPending(false);
         setError(query);
         return;
       }
@@ -131,8 +132,8 @@ export function ForecastView() {
       requestRef.current?.abort();
       const controller = new AbortController();
       requestRef.current = controller;
-      lastKeyRef.current = keyOf(query);
       setPending(true);
+      setError(null);
 
       try {
         const forecast = await forecastApi.forecast(query, controller.signal);
@@ -157,16 +158,17 @@ export function ForecastView() {
   );
 
   React.useEffect(() => {
-    if (!form || !route) return;
-    const query = toQuery(form, route);
-    if (typeof query !== 'string' && keyOf(query) === lastKeyRef.current) {
-      return;
-    }
+    if (!query) return;
     const delay = startedRef.current ? LIVE_DELAY_MS : 0;
     startedRef.current = true;
     const timer = setTimeout(() => void calculate(query), delay);
-    return () => clearTimeout(timer);
-  }, [form, route, calculate]);
+    timerRef.current = timer;
+    return () => {
+      clearTimeout(timer);
+      // Отменяем сразу при изменении формы, включая паузу перед новым запросом.
+      requestRef.current?.abort();
+    };
+  }, [query, calculate]);
 
   React.useEffect(() => () => requestRef.current?.abort(), []);
 
@@ -217,6 +219,15 @@ export function ForecastView() {
 
   const update = (patch: Partial<FormState>) =>
     setForm((f) => f && { ...f, ...patch });
+  const inputError = typeof query === 'string' ? query : null;
+  const visibleError = inputError ?? error;
+  const stale = Boolean(
+    result &&
+    (result.route !== form.route ||
+      result.date !== form.date ||
+      result.price !== Number(form.price)),
+  );
+  const updating = !visibleError && (pending || stale);
 
   return (
     <div className="pb-20 lg:pb-0">
@@ -228,9 +239,10 @@ export function ForecastView() {
           aria-label="Параметры рейса"
           onSubmit={(event) => {
             event.preventDefault();
+            if (timerRef.current !== null) clearTimeout(timerRef.current);
             void calculate(toQuery(form, route));
           }}
-          className="space-y-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:sticky lg:top-24"
+          className="min-w-0 space-y-5 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:sticky lg:top-24"
         >
           <RoutePicker
             routes={routes}
@@ -246,12 +258,29 @@ export function ForecastView() {
             value={form.price}
             route={route}
             onChange={(price) => update({ price })}
+            invalid={Boolean(inputError)}
           />
 
-          {error ? (
-            <p role="alert" className="text-sm text-[var(--color-danger)]">
-              {error}
-            </p>
+          {visibleError ? (
+            <div className="space-y-2">
+              <p
+                id="forecast-error"
+                role="alert"
+                className="text-sm text-[var(--color-danger)]"
+              >
+                {visibleError}
+              </p>
+              {!inputError && (
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  size="sm"
+                  disabled={pending}
+                >
+                  Повторить расчёт
+                </Button>
+              )}
+            </div>
           ) : (
             <p className="text-xs text-[var(--color-fg-subtle)]">
               Прогноз пересчитывается сразу при каждом изменении.
@@ -262,17 +291,18 @@ export function ForecastView() {
         <section
           ref={resultRef}
           aria-label="Результат прогноза"
+          aria-busy={updating}
           className={cn(
-            'scroll-mt-24 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-opacity sm:p-6',
+            'min-w-0 scroll-mt-24 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 transition-opacity motion-reduce:transition-none sm:p-6',
             // Форма с ошибкой: цифры относятся к прошлому расчёту.
-            error && result && 'opacity-50',
+            visibleError && result && 'opacity-50',
           )}
         >
           {result ? (
             <>
               <ForecastResult
                 forecast={result}
-                updating={pending}
+                updating={updating}
                 heroRef={heroRef}
               />
               <div className="mt-6 border-t border-[var(--color-border)] pt-6">
@@ -281,7 +311,9 @@ export function ForecastView() {
             </>
           ) : (
             <p className="text-sm text-[var(--color-fg-subtle)]">
-              Считаем прогноз…
+              {visibleError
+                ? 'Прогноз появится после успешного расчёта.'
+                : 'Считаем прогноз…'}
             </p>
           )}
         </section>
@@ -300,14 +332,22 @@ export function ForecastView() {
             className="flex w-full cursor-pointer items-center justify-between gap-3 text-left"
           >
             <span className="text-sm text-[var(--color-fg-muted)]">
-              Купят{' '}
-              <span className="text-lg font-semibold text-[var(--color-fg)] tabular-nums">
-                {formatNumber(roundPeople(result.simple.sales))}
-              </span>{' '}
-              из {formatNumber(result.seats)}{' '}
-              {plural(result.seats, ['места', 'мест', 'мест'])}
+              {visibleError ? (
+                'Проверьте параметры'
+              ) : updating ? (
+                'Пересчитываем…'
+              ) : (
+                <>
+                  Купят{' '}
+                  <span className="text-lg font-semibold text-[var(--color-fg)] tabular-nums">
+                    {formatNumber(roundPeople(result.simple.sales))}
+                  </span>{' '}
+                  из {formatNumber(result.seats)}{' '}
+                  {plural(result.seats, ['места', 'мест', 'мест'])}
+                </>
+              )}
             </span>
-            <span className="inline-flex items-center gap-1 text-sm font-medium text-[var(--color-accent)]">
+            <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium text-[var(--color-accent)]">
               К результату
               <ChevronDown aria-hidden className="size-4" />
             </span>

@@ -16,7 +16,10 @@ export function Calendar({
     <DayPicker
       locale={ru}
       weekStartsOn={1}
-      className={cn('p-3', className)}
+      className={cn(
+        'p-3 [--day-size:min(2.5rem,calc((100vw-3.25rem)/7))]',
+        className,
+      )}
       classNames={{
         months: 'relative',
         month_caption:
@@ -28,11 +31,11 @@ export function Calendar({
         month_grid: 'mt-2 border-collapse',
         weekdays: 'flex',
         weekday:
-          'w-10 pb-1 text-center text-xs font-normal text-[var(--color-fg-subtle)]',
+          'w-[var(--day-size)] pb-1 text-center text-xs font-normal text-[var(--color-fg-subtle)]',
         week: 'flex',
-        day: 'size-10 p-0 text-center',
+        day: 'size-[var(--day-size)] p-0 text-center',
         day_button:
-          'size-10 cursor-pointer rounded-[var(--radius-md)] text-sm tabular-nums transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-default disabled:hover:bg-transparent',
+          'size-[var(--day-size)] cursor-pointer rounded-[var(--radius-md)] text-sm tabular-nums transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-default disabled:hover:bg-transparent',
         selected:
           '[&>button]:bg-[var(--color-accent)] [&>button]:font-semibold [&>button]:text-[var(--color-accent-fg)] [&>button]:hover:bg-[var(--color-accent-hover)]',
         disabled: 'text-[var(--color-fg-subtle)] opacity-40',
