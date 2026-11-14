@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 export default function CabinetError({ retry }: { retry: () => void }) {
   return (
     <div className="max-w-md">
-      <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+      <h1 className="font-[family-name:var(--font-display)] text-[2.75rem] leading-none font-bold">
         Раздел не открылся
       </h1>
       <p className="mt-3 text-[var(--color-fg-muted)]">

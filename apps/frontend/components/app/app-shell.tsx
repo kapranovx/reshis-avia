@@ -3,12 +3,17 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, UserRound } from 'lucide-react';
 import { NEXT_PARAM, type PublicUser } from '@reshis-avia/shared';
 import { authApi } from '@/lib/api/auth';
 import { ApiError, messageOf } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ThemeList, ThemeToggle } from '@/components/ui/theme-toggle';
 import { Wordmark } from '@/components/ui/wordmark';
 
 type State =
@@ -62,38 +67,87 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const user = state.kind === 'ready' ? state.user : null;
+  const logoutLabel = loggingOut ? 'Выходим…' : 'Выйти';
+
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/90 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-5">
-          <Link href="/app" aria-label="К прогнозу">
+      <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-bg)]/90 backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-5">
+          {/* flex: строчная ссылка добавляла снизу место под выносные элементы, и знак уезжал вверх. */}
+          <Link href="/app" aria-label="К прогнозу" className="flex">
             <Wordmark />
           </Link>
-          <div className="ml-auto flex items-center gap-3">
-            {state.kind === 'ready' && (
+
+          <div className="ml-auto hidden items-center gap-3 sm:flex">
+            {user && (
               <span
-                title={state.user.email}
-                className="hidden max-w-[18ch] truncate text-sm text-[var(--color-fg-muted)] sm:inline"
+                title={user.email}
+                className="max-w-[18ch] truncate text-sm text-[var(--color-fg-muted)]"
               >
-                {state.user.name}
+                {user.name}
               </span>
             )}
-            <ThemeToggle className="hidden sm:inline-flex" />
-            {state.kind === 'ready' && (
+            <ThemeToggle />
+            {user && (
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 disabled={loggingOut}
                 onClick={() => void logout()}
               >
                 <LogOut />
-                {loggingOut ? 'Выходим…' : 'Выйти'}
+                {logoutLabel}
               </Button>
             )}
           </div>
+
+          {/* На телефоне имя, тема и выход не помещаются в строку: они в меню. */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="secondary"
+                aria-label="Аккаунт и тема"
+                className="ml-auto size-10 px-0 sm:hidden"
+              >
+                <UserRound />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 p-2">
+              {user && (
+                <div className="border-b border-[var(--color-border)] px-2.5 pt-1.5 pb-3">
+                  <p className="truncate font-medium">{user.name}</p>
+                  <p className="truncate text-sm text-[var(--color-fg-muted)]">
+                    {user.email}
+                  </p>
+                </div>
+              )}
+              <p className="px-2.5 pt-3 pb-1 text-xs text-[var(--color-fg-subtle)]">
+                Тема оформления
+              </p>
+              <ThemeList />
+              {user && (
+                <div className="mt-2 border-t border-[var(--color-border)] pt-2">
+                  <button
+                    type="button"
+                    disabled={loggingOut}
+                    onClick={() => void logout()}
+                    className="flex h-10 w-full items-center gap-3 rounded-[var(--radius-md)] px-2.5 text-left text-sm transition-colors hover:bg-[var(--color-surface-hover)] disabled:opacity-55"
+                  >
+                    <LogOut
+                      aria-hidden
+                      className="size-4 text-[var(--color-fg-muted)]"
+                    />
+                    {logoutLabel}
+                  </button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-6 sm:py-8">
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-6 sm:py-8">
         {logoutError && (
           <p
             role="alert"
@@ -134,6 +188,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <div className="h-11 rounded-[var(--radius-md)] bg-[var(--color-surface-muted)]" />
               </div>
             </div>
+            <div
+              aria-hidden
+              className="board hidden min-h-80 rounded-[var(--radius-lg)] lg:block"
+            />
           </div>
         )}
       </main>
