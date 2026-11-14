@@ -119,18 +119,28 @@ try {
   });
   const forecastPath =
     '/forecast?origin=MOW&destination=AER&date=2026-06-01&price=';
-  await check(5, 'Контрольный прогноз при 9 347 ₽', async () => {
-    requireSession();
-    const result = await request(`${forecastPath}9347`);
+  // Шаги 5 и 6 не зависят от файла прогноза: числа берутся из ответов API
+  // и сверяются с формулой кейса.
+  const forecastAt = async (price) => {
+    const result = await request(`${forecastPath}${price}`);
     status(result, 200);
-    const data = result.envelope.data;
+    return result.envelope.data;
+  };
+  let atBase = null;
+  await check(5, 'Формула кейса при 9 347 ₽', async () => {
+    requireSession();
+    const data = await forecastAt(9347);
+    atBase = await forecastAt(data.basePrice);
+    const wants =
+      atBase.simple.wants - data.priceSensitivity * (9347 - data.basePrice);
     assert.ok(
-      Math.abs(data.simple.wants - 726.073) < 1e-6,
-      'спрос отличается от 726,073',
+      Math.abs(data.simple.wants - wants) < 1e-6,
+      'спрос не совпадает с формулой кейса',
     );
     assert.ok(
-      Math.abs(data.simple.sales - 726.073) < 1e-6,
-      'продажи отличаются от 726,073',
+      Math.abs(data.simple.sales - Math.min(data.seats, Math.max(0, wants))) <
+        1e-6,
+      'продажи не совпадают с формулой кейса',
     );
     assert.equal(data.scenarios.length, 9, 'ожидалось 9 сценариев');
     assert.equal(
@@ -138,23 +148,26 @@ try {
       data.simple.wants,
       'медиана не совпадает с простым прогнозом',
     );
-    return 'спрос и продажи 726,073; 9 сценариев, медиана совпадает';
+    return `спрос ${data.simple.wants.toFixed(3).replace('.', ',')} по формуле; 9 сценариев, медиана совпадает`;
   });
-  await check(6, 'Ограничение мест при 5 400 ₽', async () => {
+  await check(6, 'Ограничение мест', async () => {
     requireSession();
-    const result = await request(`${forecastPath}5400`);
-    status(result, 200);
+    assert.ok(atBase, 'нет прогноза после шага 5');
+    // Цена на 100 ₽ ниже той, при которой желающих ровно столько, сколько мест.
+    const price =
+      Math.floor(
+        atBase.basePrice -
+          (atBase.seats - atBase.simple.wants) / atBase.priceSensitivity,
+      ) - 100;
+    assert.ok(price > 0, 'спроса не хватает, чтобы заполнить самолёт');
+    const data = await forecastAt(price);
+    assert.equal(data.limitedBySeats, true, 'нет признака ограничения мест');
     assert.equal(
-      result.envelope.data.limitedBySeats,
-      true,
-      'нет признака ограничения мест',
+      data.simple.sales,
+      data.seats,
+      `ожидалось ${data.seats} продаж`,
     );
-    assert.equal(
-      result.envelope.data.simple.sales,
-      900,
-      'ожидалось 900 продаж',
-    );
-    return '900 продаж, limitedBySeats=true';
+    return `при ${price} ₽ продано ${data.seats} из ${data.seats}, limitedBySeats=true`;
   });
   await check(7, 'Отрицательная цена', async () => {
     requireSession();
